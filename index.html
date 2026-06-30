@@ -1,1366 +1,711 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hub de Pronóstico · PDC</title>
-<link rel="stylesheet" href="css/pdc.css">
-<script src="js/estado.js"></script>
-<script src="js/auth.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dinámicas Comerciales · PDC</title>
+<link rel="stylesheet" href="../css/pdc.css">
+<script src="../js/estado.js"></script>
 <style>
-html, body { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+html,body{height:100%;overflow:hidden;display:flex;flex-direction:column}
+.gdm-layout{flex:1;display:flex;overflow:hidden}
+.gdm-content{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;max-width:1000px;margin:0 auto;width:100%}
+.gdm-tabs{background:#243860;display:flex;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:2px solid rgba(255,255,255,.08)}
+.gdm-tabs::-webkit-scrollbar{display:none}
+.gdm-tab{font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);background:none;border:none;padding:10px 18px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px}
+.gdm-tab:hover{color:rgba(255,255,255,.8)}
+.gdm-tab.active{color:#fff;border-bottom-color:#0D8A7A}
+.gdm-pane{display:none;flex:1;flex-direction:column}
+.gdm-pane.active{display:flex}
 
-/* ── Layout principal ── */
-.hub-layout { display: flex; flex-direction: column; height: calc(100vh - 48px); overflow: hidden; }
-.hub-content { flex: 1; overflow-y: auto; }
-.hub-page { max-width: 1100px; margin: 0 auto; padding: 20px 18px 60px; display: flex; flex-direction: column; gap: 16px; }
+/* Form */
+.form-card{background:#fff;border:1px solid #D1D9E6;border-radius:8px;overflow:hidden}
+.form-head{background:#F2F5FB;border-bottom:1px solid #D1D9E6;padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.form-head-title{font-size:13px;font-weight:700;color:#1A2B4A}
+.form-body{padding:16px;display:flex;flex-direction:column;gap:10px}
 
-/* ── Bienvenida ── */
-.welcome-card {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1D4A6B 100%);
-  border-radius: var(--r);
-  padding: 20px 22px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.welcome-text { flex: 1; min-width: 200px; }
-.welcome-title { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
-.welcome-sub { font-size: 12px; opacity: .65; }
-.welcome-ciclo {
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: var(--r-sm);
-  padding: 8px 14px;
-  text-align: center;
-}
-.welcome-ciclo-label { font-size: 10px; opacity: .6; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
-.welcome-ciclo-val { font-size: 14px; font-weight: 700; }
-.welcome-ciclo-sub { font-size: 11px; opacity: .65; margin-top: 1px; }
+/* Tipo cards */
+.tipo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tipo-card{border:1px solid #D1D9E6;border-radius:7px;padding:10px 8px;cursor:pointer;text-align:center;transition:all .15s;background:#fff}
+.tipo-card:hover{border-color:#2E5FA3;background:#EBF2FC}
+.tipo-card.sel{border:2px solid #1A2B4A;background:#EBF2FC}
+.tipo-ico{font-size:20px;margin-bottom:4px}
+.tipo-lbl{font-size:10px;font-weight:700;color:#1A2B4A}
 
-/* ── Tarea pendiente ── */
-.tarea-card {
-  border-radius: var(--r);
-  padding: 16px 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-.tarea-urgente { background: var(--rlt); border: 1px solid #F4BABA; }
-.tarea-normal  { background: var(--blt); border: 1px solid #BDD0F5; }
-.tarea-ok      { background: var(--glt); border: 1px solid #B2D9C2; }
-.tarea-icon { font-size: 24px; flex-shrink: 0; }
-.tarea-text { flex: 1; font-size: 13px; font-weight: 600; color: var(--navy); }
-.tarea-sub  { font-size: 11px; color: var(--mid); font-weight: 400; margin-top: 2px; }
+/* SKU chips */
+.sku-chips{display:flex;flex-wrap:wrap;gap:4px;min-height:28px;padding:6px 8px;background:#FAFBFD;border:1px solid #D1D9E6;border-radius:5px}
+.sku-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;background:#EBF2FC;color:#2E5FA3;border:1px solid #BDD0F5;cursor:pointer}
+.sku-chip:hover{background:#FCEAEA;color:#B83232}
+.sku-add{display:flex;gap:6px;margin-top:4px}
 
-/* ── Semanas del ciclo ── */
-.semanas-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-@media(max-width:640px) { .semanas-grid { grid-template-columns: 1fr 1fr; } }
-.semana-card {
-  background: var(--w);
-  border: 1px solid var(--bdr);
-  border-radius: var(--r);
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: all .15s;
-}
-.semana-card:hover { border-color: var(--blue); box-shadow: var(--sh); }
-.semana-card.activa { border-color: var(--teal); background: var(--tlt); }
-.semana-card.pasada { opacity: .55; }
-.semana-num { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--mid); margin-bottom: 3px; }
-.semana-label { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
-.semana-fecha { font-size: 11px; color: var(--mid); }
-.semana-estado { margin-top: 6px; }
+/* Tabla dinámicas */
+.din-table{width:100%;border-collapse:collapse;font-size:12px}
+.din-table th{background:#1A2B4A;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.din-table td{padding:8px 10px;border-bottom:1px solid #D1D9E6;vertical-align:middle}
+.din-table tr:hover td{background:#F8FAFC}
+.din-table tr:last-child td{border-bottom:none}
 
-/* ── Historial de ciclos ── */
-.ciclo-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bdr); flex-wrap: wrap; }
-.ciclo-row:last-child { border-bottom: none; }
-.ciclo-mes { font-size: 12px; font-weight: 600; color: var(--navy); min-width: 80px; }
-.ciclo-fva-wrap { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 140px; }
-.ciclo-fva-val { font-size: 13px; font-weight: 700; min-width: 52px; text-align: right; }
-.ciclo-fva-bar { flex: 1; height: 6px; background: #EEF1F7; border-radius: 3px; overflow: hidden; }
-.ciclo-fva-fill { height: 100%; border-radius: 3px; }
+/* Estado badges */
+.est-activa{background:#E8F5EE;color:#27774A}
+.est-planificada{background:#EBF2FC;color:#2E5FA3}
+.est-cerrada{background:#EEF1F7;color:#718096}
+.est-exitosa{background:#E8F5EE;color:#27774A}
+.est-parcial{background:#FDF3E3;color:#C47A1E}
+.est-fallida{background:#FCEAEA;color:#B83232}
 
-/* ── Semáforo Planner ── */
-.semaforo-table th, .semaforo-table td { font-size: 12px; }
-.sem-cell { display: flex; align-items: center; justify-content: center; gap: 4px; }
-.progreso-bar { width: 80px; height: 6px; background: #EEF1F7; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
-.progreso-fill { height: 100%; background: var(--teal); border-radius: 3px; }
+/* Resultado upload */
+.result-upload{border:2px dashed #D1D9E6;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFD}
+.result-upload:hover{border-color:#2E5FA3;background:#EBF2FC}
+.result-upload.done{border-color:#0D8A7A;background:#E6F4F2;border-style:solid}
 
-/* ── Calendario expandible ── */
-.cal-semana { margin-bottom: 12px; }
-.cal-semana-head {
-  padding: 8px 14px;
-  background: var(--navy);
-  color: #fff;
-  border-radius: var(--r-sm) var(--r-sm) 0 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-.cal-semana-head:hover { background: var(--navy2); }
-.cal-semana-label { font-size: 12px; font-weight: 600; flex: 1; }
-.cal-semana-fechas { font-size: 11px; opacity: .6; }
-.cal-semana-tog { font-size: 10px; transition: transform .2s; }
-.cal-semana-tog.open { transform: rotate(90deg); }
-.cal-dias { display: none; border: 1px solid var(--bdr); border-top: none; border-radius: 0 0 var(--r-sm) var(--r-sm); background: var(--w); }
-.cal-dias.open { display: block; }
-.cal-dia { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F1F5F9; }
-.cal-dia:last-child { border-bottom: none; }
-.cal-dia-num { font-size: 18px; font-weight: 700; color: var(--navy); width: 30px; text-align: center; line-height: 1.2; flex-shrink: 0; }
-.cal-dia-dow { font-size: 9px; color: var(--mid); text-align: center; margin-top: 1px; }
-.cal-dia-eventos { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.evento {
-  font-size: 11px;
-  padding: 4px 9px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.evento-azul   { background: var(--blt);  color: var(--blue); }
-.evento-teal   { background: var(--tlt);  color: var(--teal); }
-.evento-amber  { background: var(--alt);  color: var(--amber); }
-.evento-navy   { background: #E8EDF5;      color: var(--navy); }
-.evento-red    { background: var(--rlt);  color: var(--red); }
+/* Veredicto IA */
+.veredicto{border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.verd-exitosa{background:#E8F5EE;border:1px solid #B2D9C2}
+.verd-parcial{background:#FDF3E3;border:1px solid #F4D4A0}
+.verd-fallida{background:#FCEAEA;border:1px solid #F4BABA}
+.verd-title{font-size:14px;font-weight:700}
+.verd-detail{font-size:12px;line-height:1.5}
+.verd-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.verd-met{background:rgba(255,255,255,.7);border-radius:6px;padding:8px 10px;text-align:center}
+.verd-met-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#718096;margin-bottom:2px}
+.verd-met-val{font-size:18px;font-weight:700;color:#1A2B4A}
 
-/* ── FVA comparativo (Planner) ── */
-.fva-comp-table th { white-space: nowrap; }
-.fva-chip {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  display: inline-block;
-  min-width: 54px;
-  text-align: center;
-}
-.fva-pos-chip { background: var(--glt); color: var(--green); }
-.fva-neg-chip { background: var(--rlt); color: var(--red); }
-.fva-neu-chip { background: #EEF1F7;    color: var(--mid); }
+/* Biblioteca */
+.modelo-card{background:#fff;border:1px solid #D1D9E6;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:flex-start;transition:all .15s}
+.modelo-card:hover{border-color:#2E5FA3;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.modelo-ico{font-size:28px;flex-shrink:0}
+.modelo-body{flex:1}
+.modelo-title{font-size:13px;font-weight:700;color:#1A2B4A;margin-bottom:3px}
+.modelo-meta{font-size:11px;color:#718096;margin-bottom:6px}
+.modelo-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.modelo-stat{background:#F0F4FA;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;color:#1A2B4A}
+.modelo-stat.pos{background:#E8F5EE;color:#27774A}
+.modelo-actions{display:flex;gap:6px}
 
-/* ── Agenda Outlook ── */
-.agenda-step { display: flex; gap: 14px; margin-bottom: 20px; }
-.agenda-step-num {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--navy); color: #fff;
-  font-size: 12px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; margin-top: 2px;
-}
-.agenda-step-body { flex: 1; }
-.agenda-step-title { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
-.participante-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: #EEF1F7; border: 1px solid var(--bdr);
-  border-radius: 20px; padding: 4px 10px;
-  font-size: 11px; cursor: pointer; margin: 2px;
-  transition: all .15s;
-}
-.participante-chip.sel { background: var(--blt); border-color: var(--blue); color: var(--blue); }
-.invite-box {
-  background: #F8FAFC;
-  border: 1px solid var(--bdr);
-  border-radius: var(--r);
-  padding: 14px 16px;
-  font-size: 12px;
-  font-family: var(--M);
-  white-space: pre-wrap;
-  line-height: 1.6;
-  color: var(--sl);
-}
+/* Plantilla download */
+.plantilla-card{background:linear-gradient(135deg,#1A2B4A 0%,#243860 100%);border-radius:8px;padding:16px 18px;color:#fff;display:flex;align-items:center;gap:14px}
+.plantilla-icon{font-size:32px;flex-shrink:0}
+.plantilla-text{flex:1}
+.plantilla-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.plantilla-sub{font-size:11px;opacity:.65;line-height:1.4}
 
-/* ── Módulo acceso rápido ── */
-.modulos-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
-@media(max-width:640px) { .modulos-grid { grid-template-columns: 1fr; } }
-.modulo-card {
-  background: var(--w);
-  border: 1px solid var(--bdr);
-  border-radius: var(--r);
-  padding: 16px;
-  cursor: pointer;
-  transition: all .15s;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-decoration: none;
-}
-.modulo-card:hover { border-color: var(--blue); box-shadow: var(--sh); transform: translateY(-1px); }
-.modulo-icon { font-size: 26px; }
-.modulo-title { font-size: 13px; font-weight: 700; color: var(--navy); }
-.modulo-desc  { font-size: 11px; color: var(--mid); line-height: 1.4; }
-.modulo-badge { align-self: flex-start; }
+/* Sugerencia BB */
+.bb-sugerencia{background:#FDF3E3;border:1px solid #F4D4A0;border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.bb-sug-text{flex:1;font-size:12px;color:#4A5568}
+.bb-sug-title{font-weight:700;color:#1A2B4A;margin-bottom:2px}
+
+.hidden{display:none!important}
+.gen-bar{display:flex;align-items:center;gap:7px;padding:6px 0;color:#718096;font-size:12px}
+.spinner{width:12px;height:12px;border:2px solid #D1D9E6;border-top-color:#2E5FA3;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
 <!-- TOPBAR -->
 <div class="pdc-top">
-  <span class="pdc-top-logo">PDC</span>
+  <a href="../index.html" style="color:rgba(255,255,255,.6);font-size:11px;text-decoration:none;display:flex;align-items:center;gap:4px;flex-shrink:0">◀ Hub</a>
   <span class="pdc-top-sep">|</span>
-  <span class="pdc-top-title">Hub de Pronóstico</span>
-  <span class="pdc-top-ctx" id="top-ctx">Cargando...</span>
-  <div id="top-user"></div>
+  <span style="font-size:13px;font-weight:600;flex:1">Gestión de Dinámicas Comerciales</span>
+  <span id="top-usuario" style="font-size:11px;opacity:.55"></span>
 </div>
 
-<!-- TABS (se llenan según el rol) -->
-<div class="pdc-tabs" id="main-tabs"></div>
+<!-- TABS -->
+<div class="gdm-tabs">
+  <button class="gdm-tab active" onclick="gdmTab('registrar')">📝 Registrar dinámica</button>
+  <button class="gdm-tab" onclick="gdmTab('resultados')">📊 Cargar resultados</button>
+  <button class="gdm-tab" onclick="gdmTab('historial')">📋 Historial</button>
+  <button class="gdm-tab" onclick="gdmTab('biblioteca')">🗂️ Biblioteca de modelos</button>
+</div>
 
-<!-- CONTENIDO PRINCIPAL -->
-<div class="hub-layout">
-  <div class="hub-content" id="hub-content">
-    <!-- Se llena dinámicamente según rol -->
+<div class="gdm-layout">
+
+<!-- ══ TAB REGISTRAR ══ -->
+<div class="gdm-pane active" id="pane-registrar">
+  <div class="gdm-content">
+
+    <div class="plantilla-card">
+      <div class="plantilla-icon">📥</div>
+      <div class="plantilla-text">
+        <div class="plantilla-title">Plantilla de resultados</div>
+        <div class="plantilla-sub">Descarga el Excel para registrar sell-out, sell-in, redención y ROI. Luego súbelo en "Cargar resultados".</div>
+      </div>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:600;border-radius:5px;padding:7px 14px;cursor:pointer" onclick="descargarPlantilla()">⬇ Descargar plantilla</button>
+    </div>
+
+    <div class="form-card">
+      <div class="form-head">
+        <span class="form-head-title">➕ Nueva dinámica comercial</span>
+        <button class="btn btn-xs btn-ghost" onclick="limpiarForm()">Limpiar</button>
+      </div>
+      <div class="form-body">
+
+        <!-- Tipo -->
+        <div class="fld"><label>Tipo de dinámica</label>
+          <div class="tipo-grid">
+            <div class="tipo-card" onclick="selTipo(this,'promo')" data-tipo="promo"><div class="tipo-ico">📢</div><div class="tipo-lbl">Promoción</div></div>
+            <div class="tipo-card" onclick="selTipo(this,'exhibicion')" data-tipo="exhibicion"><div class="tipo-ico">🛒</div><div class="tipo-lbl">Exhibición</div></div>
+            <div class="tipo-card" onclick="selTipo(this,'descuento')" data-tipo="descuento"><div class="tipo-ico">💲</div><div class="tipo-lbl">Descuento</div></div>
+            <div class="tipo-card" onclick="selTipo(this,'lanzamiento')" data-tipo="lanzamiento"><div class="tipo-ico">🚀</div><div class="tipo-lbl">Lanzamiento</div></div>
+            <div class="tipo-card" onclick="selTipo(this,'otro')" data-tipo="otro"><div class="tipo-ico">📌</div><div class="tipo-lbl">Otro</div></div>
+          </div>
+          <input type="hidden" id="din-tipo" value="">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fld"><label>Nombre de la dinámica</label><input type="text" id="din-nombre" placeholder="Ej: 2x1 Cloro 1L Walmart julio"></div>
+          <div class="fld"><label>Marca</label>
+            <select id="din-marca">
+              <option value="">— Selecciona —</option>
+              <option value="MB">Magia Blanca</option><option value="AU">Australian</option>
+              <option value="DC">Del Carmen</option><option value="AY">Ayudín</option><option value="DK">DKasa</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fld"><label>Canal</label>
+            <select id="din-canal">
+              <option value="">— Todos —</option>
+              <option value="Supermercados">Supermercados / Canal moderno</option>
+              <option value="Detalle">Detalle / Tradicional</option>
+              <option value="Mayoreo">Mayoreo</option>
+              <option value="Farmacia">Farmacia</option>
+              <option value="Online">E-commerce</option>
+            </select>
+          </div>
+          <div class="fld"><label>Cliente / Cadena</label><input type="text" id="din-cliente" placeholder="Ej: Walmart, La Torre, Paiz..."></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fld"><label>Fecha de inicio</label><input type="date" id="din-fini"></div>
+          <div class="fld"><label>Fecha de fin</label><input type="date" id="din-ffin"></div>
+        </div>
+
+        <div class="fld"><label>Mecánica / Descripción</label>
+          <textarea id="din-mecanica" placeholder="Ej: 2x1 en presentación 1L, descuento del 40% en precio de lista, exhibición en góndola principal durante 4 semanas..." style="min-height:60px"></textarea>
+        </div>
+
+        <div class="fld"><label>SKUs involucrados</label>
+          <div class="sku-chips" id="sku-chips-din"></div>
+          <div class="sku-add">
+            <input type="text" id="sku-input-din" placeholder="Código del SKU..." style="width:160px;font-size:11px" onkeydown="if(event.key==='Enter'){addSkuDin();event.preventDefault()}">
+            <button class="btn btn-xs btn-ghost" onclick="addSkuDin()">+ Agregar</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="fld"><label>Incremento esperado (%)</label><input type="number" id="din-incr-esp" placeholder="Ej: 25"></div>
+          <div class="fld"><label>Inversión estimada (Q)</label><input type="number" id="din-inversion" placeholder="Ej: 15000"></div>
+          <div class="fld"><label>Unidades proyectadas</label><input type="number" id="din-unid-proy" placeholder="Ej: 5000"></div>
+        </div>
+
+        <div class="fld"><label>Objetivo / Hipótesis</label>
+          <textarea id="din-objetivo" placeholder="¿Qué esperas lograr con esta dinámica? ¿Cuál es la hipótesis detrás?" style="min-height:44px"></textarea>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+          <button class="btn btn-ghost btn-sm" onclick="limpiarForm()">Cancelar</button>
+          <button class="btn btn-teal btn-sm" onclick="guardarDin()">💾 Guardar dinámica</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Lista activas -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">📋 Dinámicas activas y planificadas</span></div>
+      <div id="lista-activas-wrap">
+        <div style="padding:20px;text-align:center;color:#718096;font-size:12px">Sin dinámicas registradas aún.</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
+<!-- ══ TAB RESULTADOS ══ -->
+<div class="gdm-pane" id="pane-resultados">
+  <div class="gdm-content">
+
+    <div class="alert alert-info">
+      <span>📊</span>
+      <span>Descarga la plantilla, llénala con los datos reales de tu dinámica y súbela aquí. La IA calculará automáticamente si fue exitosa y guardará el modelo para futuras recomendaciones.</span>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">📤 Subir resultados de una dinámica</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="fld"><label>Selecciona la dinámica</label>
+          <select id="sel-din-result" onchange="onSelDin()" style="max-width:400px">
+            <option value="">— Selecciona una dinámica cerrada —</option>
+          </select>
+        </div>
+
+        <div id="din-preview" style="display:none;background:#F0F4FA;border-radius:6px;padding:10px 12px;font-size:12px">
+          <div id="din-preview-content"></div>
+        </div>
+
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#718096;margin-bottom:6px">Datos reales</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+            <div class="fld"><label>Sell-out real (unidades)</label><input type="number" id="res-sellout" placeholder="0"></div>
+            <div class="fld"><label>Sell-in real (unidades)</label><input type="number" id="res-sellin" placeholder="0"></div>
+            <div class="fld"><label>Redención (%)</label><input type="number" id="res-redencion" placeholder="0" step="0.1"></div>
+            <div class="fld"><label>Inversión real (Q)</label><input type="number" id="res-inversion" placeholder="0"></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fld"><label>Incremento real logrado (%)</label><input type="number" id="res-incr-real" placeholder="Ej: 28" step="0.1"></div>
+          <div class="fld"><label>Unidades vendidas durante la dinámica</label><input type="number" id="res-unid-real" placeholder="0"></div>
+        </div>
+
+        <div class="fld"><label>Comentario ejecutivo</label>
+          <textarea id="res-comentario" placeholder="¿Qué funcionó? ¿Qué no? ¿Factores externos que influyeron?..." style="min-height:60px"></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="descargarPlantilla()">📥 Descargar plantilla Excel</button>
+          <span style="font-size:11px;color:#718096">o ingresa los datos manualmente arriba</span>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-primary btn-sm" onclick="evaluarConIA()" id="btn-evaluar">✦ Evaluar con IA</button>
+        </div>
+
+        <div id="veredicto-wrap"></div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ TAB HISTORIAL ══ -->
+<div class="gdm-pane" id="pane-historial">
+  <div class="gdm-content">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      <div class="kpi-card"><div class="kpi-label">Total dinámicas</div><div class="kpi-value" id="kpi-total">0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Exitosas</div><div class="kpi-value" style="color:#27774A" id="kpi-exitosas">0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Parciales</div><div class="kpi-value" style="color:#C47A1E" id="kpi-parciales">0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Sin evaluar</div><div class="kpi-value" style="color:#718096" id="kpi-pendientes">0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">📋 Todas las dinámicas</span>
+        <div style="display:flex;gap:8px">
+          <select id="fil-marca-hist" onchange="renderHistorial()" style="font-size:11px;border:1px solid #D1D9E6;border-radius:4px;padding:3px 7px">
+            <option value="">Todas las marcas</option>
+            <option value="MB">Magia Blanca</option><option value="AU">Australian</option>
+            <option value="DC">Del Carmen</option><option value="AY">Ayudín</option><option value="DK">DKasa</option>
+          </select>
+        </div>
+      </div>
+      <div id="historial-tabla" style="overflow-x:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB BIBLIOTECA ══ -->
+<div class="gdm-pane" id="pane-biblioteca">
+  <div class="gdm-content">
+
+    <div class="alert alert-info">
+      <span>🗂️</span>
+      <span>Solo aparecen aquí las dinámicas evaluadas como <strong>exitosas</strong> por la IA. Puedes aplicar cualquier modelo como Building Block directamente.</span>
+    </div>
+
+    <div id="biblioteca-wrap">
+      <div style="text-align:center;padding:40px 20px;color:#718096">
+        <div style="font-size:36px;margin-bottom:8px;opacity:.4">🗂️</div>
+        <div style="font-size:14px;font-weight:600;color:#4A5568;margin-bottom:4px">Sin modelos todavía</div>
+        <div style="font-size:12px;line-height:1.6;max-width:280px;margin:0 auto">Los modelos aparecen cuando una dinámica es evaluada como exitosa en la pestaña de Resultados.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /gdm-layout -->
+
 <script>
-/* ═══════════════════════════════════════════════════
-   Hub principal — lógica de vistas por rol
-   ═══════════════════════════════════════════════════ */
+// ── Estado ──
+let dinamicas = JSON.parse(localStorage.getItem('pdc_gdm_dinamicas')||'[]');
+let skusDinActual = [];
+let tipoDinActual = '';
 
-let usuarioActivo = null;
-let tabActual = null;
+const usuarioHub = JSON.parse(localStorage.getItem('pdc_hub_usuario_activo')||'null');
+if(usuarioHub) document.getElementById('top-usuario').textContent = usuarioHub.nombre;
 
-/* ── Inicializar ────────────────────────────────── */
-Auth.init(function(usuario) {
-  usuarioActivo = usuario;
-  iniciarHub();
-});
+const TIPO_ICO = {promo:'📢',exhibicion:'🛒',descuento:'💲',lanzamiento:'🚀',otro:'📌'};
+const TIPO_LBL = {promo:'Promoción',exhibicion:'Exhibición',descuento:'Descuento precio',lanzamiento:'Lanzamiento',otro:'Otro'};
+const MARCAS = {MB:'Magia Blanca',AU:'Australian',DC:'Del Carmen',AY:'Ayudín',DK:'DKasa'};
 
-function iniciarHub() {
-  // Topbar
-  document.getElementById('top-ctx').textContent =
-    PDC.CICLO_ACTUAL.nombre + ' · ' + (usuarioActivo.rol === 'GM'
-      ? (PDC.MARCAS.find(m => m.id === usuarioActivo.marcaId)?.nombre || '')
-      : 'Planner de Demanda');
+function guardar(){ localStorage.setItem('pdc_gdm_dinamicas', JSON.stringify(dinamicas)); }
 
-  Auth.renderBtnCambiar(document.getElementById('top-user'));
-
-  // Construir vistas según rol
-  if (usuarioActivo.rol === 'GM') {
-    construirVistasGM();
-  } else {
-    construirVistasPLANNER();
-  }
-}
-
-/* ════════════════════════════════════════════════════
-   VISTA GERENTE DE MARCA
-   ════════════════════════════════════════════════════ */
-function construirVistasGM() {
-  const tabs = [
-    { id: 'inicio',     label: 'Inicio',     icon: '🏠' },
-    { id: 'calendario', label: 'Calendario', icon: '📅' },
-    { id: 'fva',        label: 'Mi FVA',     icon: '📊' },
-  ];
-  renderTabs(tabs, 'inicio');
-
-  renderTabGM('inicio');
-}
-
-function renderTabGM(tabId) {
-  tabActual = tabId;
-  const contenido = document.getElementById('hub-content');
-  const marcaId = usuarioActivo.marcaId;
-  const marca = PDC.MARCAS.find(m => m.id === marcaId);
-
-  if (tabId === 'inicio') {
-    contenido.innerHTML = `<div class="hub-page" id="page-gm-inicio"></div>`;
-    renderInicioGM(document.getElementById('page-gm-inicio'), marcaId, marca);
-  } else if (tabId === 'calendario') {
-    contenido.innerHTML = `<div class="hub-page" id="page-gm-cal"></div>`;
-    renderCalendarioGM(document.getElementById('page-gm-cal'));
-  } else if (tabId === 'fva') {
-    contenido.innerHTML = `<div class="hub-page" id="page-gm-fva"></div>`;
-    renderFVAGM(document.getElementById('page-gm-fva'), marcaId, marca);
-  }
-}
-
-function renderInicioGM(el, marcaId, marca) {
-  const estado = PDC.getEstadoGM(marcaId);
-  const tarea  = PDC.tareaPendiente(marcaId);
-  const sesionGuardada = PDC.leerSesionBB(marcaId);
-  const diasCierre = PDC.diasParaCierre();
-  const semanaActual = PDC.getSemanaActual();
-
-  // Bienvenida
-  const bienvenida = document.createElement('div');
-  bienvenida.className = 'welcome-card';
-  bienvenida.innerHTML = `
-    <div class="welcome-text">
-      <div class="welcome-title">Bienvenido, ${usuarioActivo.nombre.split(' ')[0]} 👋</div>
-      <div class="welcome-sub">${marca?.nombre || ''} · ${PDC.CICLO_ACTUAL.nombre}</div>
-    </div>
-    <div class="welcome-ciclo">
-      <div class="welcome-ciclo-label">Semana activa</div>
-      <div class="welcome-ciclo-val">${semanaActual === 'pre-ciclo' ? 'Pre-ciclo' : semanaActual === 'post-ciclo' ? 'Cerrado' : semanaActual}</div>
-      <div class="welcome-ciclo-sub">${diasCierre > 0 ? diasCierre + ' días al cierre' : 'Ciclo cerrado'}</div>
-    </div>
-  `;
-  el.appendChild(bienvenida);
-
-  // Tarea pendiente
-  if (tarea) {
-    const tareaEl = document.createElement('div');
-    tareaEl.className = `tarea-card ${tarea.urgente ? 'tarea-urgente' : 'tarea-normal'}`;
-    tareaEl.innerHTML = `
-      <div class="tarea-icon">${tarea.urgente ? '⚠️' : '📋'}</div>
-      <div style="flex:1">
-        <div class="tarea-text">${tarea.texto}</div>
-        <div class="tarea-sub">${tarea.tipo === 'bb' ? 'Fecha límite: ' + PDC.formatFecha(PDC.CICLO_ACTUAL.fechaLimiteBB) : 'Revisar en tab Calendario'}</div>
-      </div>
-      ${tarea.tipo === 'bb' ? `
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          <a href="bb/index.html" class="btn btn-primary" style="text-decoration:none">
-            ${sesionGuardada ? '🔄 Continuar Building Blocks' : '➕ Abrir Building Blocks'}
-          </a>
-          ${sesionGuardada ? `<span style="font-size:10px;color:var(--teal)">✓ Sesión guardada — ${PDC.formatFecha(sesionGuardada.guardadoEn?.slice(0,10))}</span>` : ''}
-        </div>
-      ` : ''}
-    `;
-    el.appendChild(tareaEl);
-  } else {
-    const okEl = document.createElement('div');
-    okEl.className = 'tarea-card tarea-ok';
-    okEl.innerHTML = `
-      <div class="tarea-icon">✅</div>
-      <div class="flex-1">
-        <div class="tarea-text">Todo al día — no hay tareas pendientes</div>
-        <div class="tarea-sub">Puedes revisar el calendario o tu historial de FVA</div>
-      </div>
-    `;
-    el.appendChild(okEl);
-  }
-
-  // Estado del ciclo actual
-  const estadoCard = document.createElement('div');
-  estadoCard.className = 'card';
-  estadoCard.innerHTML = `
-    <div class="card-head">
-      <span class="card-title">📋 Mi estado en este ciclo</span>
-    </div>
-    <div class="card-body tight">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="padding:10px;background:${estado.bbEntregado ? '#E8F5EE' : '#FDF3E3'};border-radius:var(--r-sm);border:1px solid ${estado.bbEntregado ? '#B2D9C2' : '#F4D4A0'}">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mid);margin-bottom:4px">Building Blocks</div>
-          <div style="font-size:13px;font-weight:700;color:${estado.bbEntregado ? 'var(--green)' : 'var(--amber)'}">
-            ${estado.bbEntregado ? '✅ Entregado' : '⏳ Pendiente'}
-          </div>
-          ${estado.bbFecha ? `<div style="font-size:10px;color:var(--mid);margin-top:2px">${PDC.formatFecha(estado.bbFecha)}</div>` : ''}
-        </div>
-        <div style="padding:10px;background:${estado.forecastAprobado ? '#E8F5EE' : '#F0F2F7'};border-radius:var(--r-sm);border:1px solid ${estado.forecastAprobado ? '#B2D9C2' : 'var(--bdr)'}">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mid);margin-bottom:4px">Forecast V2</div>
-          <div style="font-size:13px;font-weight:700;color:${estado.forecastAprobado ? 'var(--green)' : 'var(--mid)'}">
-            ${estado.forecastAprobado ? '✅ Aprobado' : '— En espera'}
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  el.appendChild(estadoCard);
-
-  // Acceso a módulos
-  const modCard = document.createElement('div');
-  modCard.className = 'card';
-  modCard.innerHTML = `
-    <div class="card-head"><span class="card-title">🚀 Módulos</span></div>
-    <div class="card-body">
-      <div class="modulos-grid">
-        <a href="bb/index.html" class="modulo-card">
-          <div class="modulo-icon">🏗️</div>
-          <div class="modulo-title">Building Blocks</div>
-          <div class="modulo-desc">Captura tus ajustes al forecast estadístico con apoyo de IA</div>
-          ${sesionGuardada ? '<span class="badge badge-teal modulo-badge" style="background:var(--tlt);color:var(--teal)">Sesión guardada</span>' : '<span class="badge badge-mid modulo-badge">Sin sesión</span>'}
-        </a>
-        <a href="gdm/index.html" class="modulo-card">
-          <div class="modulo-icon">📈</div>
-          <div class="modulo-title">Dinámicas Comerciales</div>
-          <div class="modulo-desc">Registra iniciativas y mide su efectividad con sell-out y sell-in</div>
-          <span class="badge badge-orange modulo-badge">Nuevo</span>
-        </a>
-        <div class="modulo-card" onclick="irATab('fva')" style="cursor:pointer">
-          <div class="modulo-icon">📊</div>
-          <div class="modulo-title">Mi FVA</div>
-          <div class="modulo-desc">Historial de tu Forecast Value Added en los últimos ciclos</div>
-        </div>
-      </div>
-    </div>
-  `;
-  el.appendChild(modCard);
-
-  // Historial de ciclos
-  const fvaData = PDC.getFVA(marcaId);
-  const histCard = document.createElement('div');
-  histCard.className = 'card';
-  let histRows = fvaData.map(c => {
-    if (c.valor === null) {
-      return `<div class="ciclo-row">
-        <div class="ciclo-mes">${c.ciclo}</div>
-        <div style="font-size:11px;color:var(--mid)">Ciclo en curso</div>
-        <span class="badge badge-blue">Activo</span>
-      </div>`;
-    }
-    const pos = c.valor >= 0;
-    const ancho = Math.min(Math.abs(c.valor) * 3, 100);
-    return `<div class="ciclo-row">
-      <div class="ciclo-mes">${c.ciclo}</div>
-      <div class="ciclo-fva-wrap">
-        <div class="ciclo-fva-bar"><div class="ciclo-fva-fill" style="width:${ancho}%;background:${pos ? 'var(--green)' : 'var(--red)'}"></div></div>
-        <div class="ciclo-fva-val" style="color:${pos ? 'var(--green)' : 'var(--red)'}">${pos ? '+' : ''}${c.valor.toFixed(1)}%</div>
-      </div>
-    </div>`;
-  }).join('');
-  histCard.innerHTML = `
-    <div class="card-head"><span class="card-title">📈 Historial FVA — últimos ciclos</span></div>
-    <div class="card-body tight">${histRows}</div>
-  `;
-  el.appendChild(histCard);
-}
-
-function renderCalendarioGM(el) {
-  el.innerHTML = `<div class="card"><div class="card-head"><span class="card-title">📅 Calendario del ciclo — ${PDC.CICLO_ACTUAL.nombre}</span></div><div class="card-body tight" id="cal-content"></div></div>`;
-
-  const semanas = PDC.CICLO_ACTUAL.semanas;
-  const semActual = PDC.getSemanaActual();
-  const calEl = document.getElementById('cal-content');
-  const marcaId = usuarioActivo.marcaId;
-
-  // Eventos del ciclo por día
-  const eventos = {
-    '2026-07-07': [{ label: 'FCS Pro corre estadístico V1',            clase: 'evento-navy' }],
-    '2026-07-09': [{ label: 'Planner valida baseline estadístico',      clase: 'evento-azul' }],
-    '2026-07-11': [{ label: 'Gerentes notificados — BBs habilitados',   clase: 'evento-teal' }],
-    '2026-07-14': [{ label: '⚠️ Fecha límite entrega de BBs (48h)',     clase: 'evento-red'  }],
-    '2026-07-15': [{ label: 'Sesión colaborativa — Magia Blanca',       clase: 'evento-teal' }],
-    '2026-07-16': [{ label: 'Sesión colaborativa — Australian',         clase: 'evento-teal' }],
-    '2026-07-17': [{ label: 'Sesión colaborativa — Del Carmen',         clase: 'evento-teal' },
-                   { label: 'Sesión colaborativa — Ayudín (PM)',        clase: 'evento-teal' }],
-    '2026-07-18': [{ label: 'Sesión colaborativa — DKasa',              clase: 'evento-teal' },
-                   { label: 'Distribuidores — tarde',                   clase: 'evento-amber'}],
-    '2026-07-21': [{ label: 'Sesión distribuidores restantes',          clase: 'evento-amber'}],
-    '2026-07-22': [{ label: 'Consolidación forecast V2',                clase: 'evento-azul' }],
-    '2026-07-23': [{ label: '🔒 Cierre máximo S4 (regla de oro)',       clase: 'evento-red'  }],
-    '2026-07-24': [{ label: 'Pre S&OP — revisión ejecutiva',            clase: 'evento-navy' }],
-    '2026-07-25': [{ label: 'S&OP Ejecutivo · Entrega a Supply',        clase: 'evento-navy' }],
-  };
-
-  const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-
-  Object.entries(semanas).forEach(([sk, sv]) => {
-    const div = document.createElement('div');
-    div.className = 'cal-semana';
-    const esActiva = sk === semActual;
-
-    let diasHtml = '';
-    let fecha = new Date(sv.inicio + 'T12:00:00');
-    const fin  = new Date(sv.fin   + 'T12:00:00');
-    while (fecha <= fin) {
-      const iso = fecha.toISOString().slice(0,10);
-      const evts = eventos[iso] || [];
-      diasHtml += `<div class="cal-dia">
-        <div>
-          <div class="cal-dia-num">${fecha.getDate()}</div>
-          <div class="cal-dia-dow">${DIAS[fecha.getDay()]}</div>
-        </div>
-        <div class="cal-dia-eventos">
-          ${evts.length ? evts.map(e => `<div class="evento ${e.clase}">${e.label}</div>`).join('') : '<span style="font-size:11px;color:var(--light)">Sin eventos</span>'}
-        </div>
-      </div>`;
-      fecha.setDate(fecha.getDate() + 1);
-    }
-
-    div.innerHTML = `
-      <div class="cal-semana-head" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.cal-semana-tog').classList.toggle('open')">
-        <div>
-          <span class="cal-semana-label">${sv.label}</span>
-          ${esActiva ? '<span class="badge badge-teal" style="margin-left:8px">Semana actual</span>' : ''}
-        </div>
-        <span class="cal-semana-fechas">${PDC.formatFechaCorta(sv.inicio)} — ${PDC.formatFechaCorta(sv.fin)}</span>
-        <span class="cal-semana-tog ${esActiva ? 'open' : ''}">▶</span>
-      </div>
-      <div class="cal-dias ${esActiva ? 'open' : ''}">${diasHtml}</div>
-    `;
-    calEl.appendChild(div);
+// ── Tabs ──
+function gdmTab(t){
+  document.querySelectorAll('.gdm-tab').forEach((b,i)=>{
+    const ts=['registrar','resultados','historial','biblioteca'];
+    b.classList.toggle('active',ts[i]===t);
   });
+  document.querySelectorAll('.gdm-pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+t));
+  if(t==='resultados'){renderSelectorResultado();}
+  if(t==='historial'){renderHistorial();renderKPIs();}
+  if(t==='biblioteca'){renderBiblioteca();}
 }
 
-function renderFVAGM(el, marcaId, marca) {
-  const fvaData = PDC.getFVA(marcaId);
-  const datosCiclos = fvaData.filter(d => d.valor !== null);
-  const promedio = datosCiclos.length
-    ? (datosCiclos.reduce((s,d) => s + d.valor, 0) / datosCiclos.length).toFixed(1)
-    : null;
+// ── Form ──
+function selTipo(el,tipo){
+  document.querySelectorAll('.tipo-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  tipoDinActual=tipo;
+  document.getElementById('din-tipo').value=tipo;
+}
 
-  let html = `
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">📊 Mi Forecast Value Added — ${marca?.nombre || ''}</span>
-      </div>
-      <div class="card-body">
-        <div class="alert alert-info" style="margin-bottom:14px">
-          <span>ℹ️</span>
-          <span>El FVA mide si tus ajustes del V2 mejoran o empeoran la precisión vs. el estadístico V1 puro. <strong>Positivo = mejor que el modelo estadístico.</strong> Se calcula desde el ciclo 3.</span>
-        </div>
+function addSkuDin(){
+  const inp=document.getElementById('sku-input-din');
+  const v=inp.value.trim().toUpperCase();
+  if(!v||skusDinActual.includes(v))return;
+  skusDinActual.push(v);
+  renderChipsDin();
+  inp.value='';inp.focus();
+}
 
-        <div class="grid-3" style="margin-bottom:16px">
-          <div class="kpi-card">
-            <div class="kpi-label">Promedio FVA</div>
-            <div class="kpi-value" style="color:${parseFloat(promedio) >= 0 ? 'var(--green)' : 'var(--red)'}">
-              ${promedio !== null ? (parseFloat(promedio) >= 0 ? '+' : '') + promedio + '%' : '—'}
-            </div>
-            <div class="kpi-sub">Últimos ${datosCiclos.length} ciclos</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Mejor ciclo</div>
-            <div class="kpi-value" style="color:var(--green)">
-              ${datosCiclos.length ? '+' + Math.max(...datosCiclos.map(d=>d.valor)).toFixed(1) + '%' : '—'}
-            </div>
-            <div class="kpi-sub">${datosCiclos.length ? datosCiclos.find(d=>d.valor===Math.max(...datosCiclos.map(x=>x.valor)))?.ciclo : ''}</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Ciclos evaluados</div>
-            <div class="kpi-value">${datosCiclos.length}</div>
-            <div class="kpi-sub">de ${fvaData.length} totales</div>
-          </div>
-        </div>
+function renderChipsDin(){
+  document.getElementById('sku-chips-din').innerHTML=
+    skusDinActual.map((s,i)=>`<span class="sku-chip" onclick="skusDinActual.splice(${i},1);renderChipsDin()">${s} ×</span>`).join('');
+}
 
-        <div>${fvaData.map(c => {
-          if (c.valor === null) return `
-            <div class="ciclo-row">
-              <div class="ciclo-mes" style="min-width:90px">${c.ciclo}</div>
-              <div style="flex:1;font-size:11px;color:var(--mid)">Ciclo activo — FVA se calculará al cierre</div>
-              <span class="badge badge-blue">En curso</span>
-            </div>`;
-          const pos = c.valor >= 0;
-          const ancho = Math.min(Math.abs(c.valor) * 4, 100);
-          return `
-            <div class="ciclo-row">
-              <div class="ciclo-mes" style="min-width:90px">${c.ciclo}</div>
-              <div class="fva-bar-wrap" style="flex:1">
-                <div class="fva-bar-bg"><div class="fva-bar-fill ${pos?'fva-pos':'fva-neg'}" style="width:${ancho}%"></div></div>
-                <div style="font-size:13px;font-weight:700;min-width:60px;text-align:right;color:${pos?'var(--green)':'var(--red)'}">
-                  ${pos ? '+' : ''}${c.valor.toFixed(1)}%
-                </div>
-              </div>
-              <span class="badge ${pos ? 'badge-green' : 'badge-red'}" style="margin-left:8px">${pos ? 'Positivo' : 'Negativo'}</span>
-            </div>`;
-        }).join('')}</div>
-      </div>
+function limpiarForm(){
+  ['din-nombre','din-mecanica','din-objetivo','din-cliente'].forEach(id=>document.getElementById(id).value='');
+  ['din-marca','din-canal'].forEach(id=>document.getElementById(id).value='');
+  ['din-fini','din-ffin'].forEach(id=>document.getElementById(id).value='');
+  ['din-incr-esp','din-inversion','din-unid-proy'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('din-tipo').value='';
+  document.querySelectorAll('.tipo-card').forEach(c=>c.classList.remove('sel'));
+  skusDinActual=[];renderChipsDin();tipoDinActual='';
+}
+
+function guardarDin(){
+  const nombre=document.getElementById('din-nombre').value.trim();
+  if(!nombre){alert('Ingresa un nombre para la dinámica.');return;}
+  if(!tipoDinActual){alert('Selecciona el tipo de dinámica.');return;}
+  const marcaId=document.getElementById('din-marca').value;
+  const din={
+    id:Date.now().toString(),
+    nombre,tipo:tipoDinActual,
+    marcaId,marcaNombre:MARCAS[marcaId]||'',
+    canal:document.getElementById('din-canal').value,
+    cliente:document.getElementById('din-cliente').value,
+    fIni:document.getElementById('din-fini').value,
+    fFin:document.getElementById('din-ffin').value,
+    mecanica:document.getElementById('din-mecanica').value,
+    objetivo:document.getElementById('din-objetivo').value,
+    skus:[...skusDinActual],
+    incrEsperado:parseFloat(document.getElementById('din-incr-esp').value)||null,
+    inversion:parseFloat(document.getElementById('din-inversion').value)||null,
+    unidProy:parseFloat(document.getElementById('din-unid-proy').value)||null,
+    estado:'planificada',
+    creadoPor:usuarioHub?.nombre||'',
+    creadoEn:new Date().toISOString(),
+    resultado:null,
+    veredicto:null,
+  };
+  dinamicas.push(din);guardar();limpiarForm();
+  renderListaActivas();
+  // Feedback
+  const btn=document.querySelector('.form-body .btn-teal');
+  const orig=btn.textContent;btn.textContent='✅ Guardado';
+  setTimeout(()=>btn.textContent=orig,1500);
+}
+
+function cerrarDin(id){
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  if(!confirm(`¿Marcar "${d.nombre}" como cerrada? Podrás subir sus resultados en la pestaña de Resultados.`))return;
+  d.estado='cerrada';guardar();renderListaActivas();
+}
+
+function renderListaActivas(){
+  const activas=dinamicas.filter(d=>d.estado!=='cerrada').slice().reverse();
+  const el=document.getElementById('lista-activas-wrap');
+  if(!activas.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#718096;font-size:12px">Sin dinámicas activas.</div>';return;}
+  el.innerHTML=`<div style="overflow-x:auto"><table class="din-table">
+    <thead><tr><th>Dinámica</th><th>Tipo</th><th>Marca</th><th>Canal</th><th>Fechas</th><th>Incr. esp.</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${activas.map(d=>`<tr>
+      <td><div style="font-weight:600;font-size:12px">${TIPO_ICO[d.tipo]||'📌'} ${d.nombre}</div>${d.skus.length?`<div style="margin-top:2px">${d.skus.slice(0,3).map(s=>`<span style="font-size:10px;background:#EEF1F7;padding:1px 6px;border-radius:20px;margin-right:2px">${s}</span>`).join('')}${d.skus.length>3?`<span style="font-size:10px;color:#718096">+${d.skus.length-3}</span>`:''}</div>`:''}</td>
+      <td><span class="badge" style="background:#EEF1F7;color:#4A5568">${TIPO_LBL[d.tipo]||'Otro'}</span></td>
+      <td style="font-size:12px">${d.marcaNombre||'—'}</td>
+      <td style="font-size:11px;color:#718096">${d.canal||'Todos'}</td>
+      <td style="font-size:11px;white-space:nowrap">${fmtF(d.fIni)}${d.fFin?' → '+fmtF(d.fFin):''}</td>
+      <td style="font-weight:600;text-align:center">${d.incrEsperado?'+'+d.incrEsperado+'%':'—'}</td>
+      <td><span class="badge est-${d.estado}">${d.estado}</span></td>
+      <td><button class="btn btn-xs btn-danger" onclick="cerrarDin('${d.id}')">Cerrar</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ── Resultados ──
+function renderSelectorResultado(){
+  const cerradas=dinamicas.filter(d=>d.estado==='cerrada');
+  const sel=document.getElementById('sel-din-result');
+  sel.innerHTML='<option value="">— Selecciona una dinámica cerrada —</option>'+
+    cerradas.map(d=>`<option value="${d.id}">${TIPO_ICO[d.tipo]} ${d.nombre} (${fmtF(d.fIni)})</option>`).join('');
+}
+
+function onSelDin(){
+  const id=document.getElementById('sel-din-result').value;
+  const wrap=document.getElementById('din-preview');
+  if(!id){wrap.style.display='none';return;}
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  wrap.style.display='block';
+  document.getElementById('din-preview-content').innerHTML=`
+    <div style="font-weight:700;color:#1A2B4A;margin-bottom:4px">${TIPO_ICO[d.tipo]} ${d.nombre}</div>
+    <div style="font-size:11px;color:#718096;display:flex;gap:12px;flex-wrap:wrap">
+      <span>${d.marcaNombre||'—'}</span><span>${d.canal||'Todos'}</span>
+      <span>${fmtF(d.fIni)} → ${fmtF(d.fFin)}</span>
+      ${d.incrEsperado?`<span style="font-weight:600;color:#1A2B4A">Esperado: +${d.incrEsperado}%</span>`:''}
+      ${d.unidProy?`<span style="font-weight:600;color:#1A2B4A">Proyectadas: ${d.unidProy.toLocaleString()} uds</span>`:''}
     </div>
+    ${d.resultado?`<div style="margin-top:6px;font-size:11px;color:#C47A1E;font-weight:600">⚠ Ya tiene resultados cargados — los nuevos datos los reemplazarán.</div>`:''}
   `;
-  el.innerHTML = html;
-}
-
-/* ════════════════════════════════════════════════════
-   VISTA PLANNER
-   ════════════════════════════════════════════════════ */
-function construirVistasPLANNER() {
-  // Contar BBs pendientes para badge
-  const pendientes = PDC.MARCAS.filter(m => !PDC.getEstadoGM(m.id).bbEntregado).length;
-
-  const tabs = [
-    { id: 'inicio',     label: 'Inicio',         icon: '🏠', badge: pendientes > 0 ? pendientes : null },
-    { id: 'calendario', label: 'Calendario',      icon: '📅' },
-    { id: 'fva',        label: 'FVA del ciclo',   icon: '📊' },
-    { id: 'agenda',     label: 'Agenda Outlook',  icon: '📆' },
-    { id: 'admin',      label: 'Administrar',     icon: '⚙️' },
-  ];
-  renderTabs(tabs, 'inicio');
-  renderTabPlanner('inicio');
-}
-
-function renderTabPlanner(tabId) {
-  tabActual = tabId;
-  const contenido = document.getElementById('hub-content');
-
-  if (tabId === 'inicio') {
-    contenido.innerHTML = `<div class="hub-page" id="page-pl-inicio"></div>`;
-    renderInicioPLANNER(document.getElementById('page-pl-inicio'));
-  } else if (tabId === 'calendario') {
-    contenido.innerHTML = `<div class="hub-page" id="page-pl-cal"></div>`;
-    renderCalendarioGM(document.getElementById('page-pl-cal')); // Mismo calendario
-  } else if (tabId === 'fva') {
-    contenido.innerHTML = `<div class="hub-page" id="page-pl-fva"></div>`;
-    renderFVAPlanner(document.getElementById('page-pl-fva'));
-  } else if (tabId === 'agenda') {
-    contenido.innerHTML = `<div class="hub-page" id="page-pl-agenda"></div>`;
-    renderAgendaPlanner(document.getElementById('page-pl-agenda'));
-  } else if (tabId === 'admin') {
-    contenido.innerHTML = `<div class="hub-page" id="page-pl-admin"></div>`;
-    renderAdmin(document.getElementById('page-pl-admin'));
+  // Pre-fill si ya tiene resultado
+  if(d.resultado){
+    ['sellout','sellin','redencion','inversion','incr-real','unid-real'].forEach(k=>{
+      const el=document.getElementById('res-'+k);
+      if(el) el.value=d.resultado[k.replace('-','')]||'';
+    });
+    document.getElementById('res-comentario').value=d.resultado.comentario||'';
   }
 }
 
-function renderInicioPLANNER(el) {
-  const marcas = PDC.MARCAS;
-  const totalBB = marcas.filter(m => PDC.getEstadoGM(m.id).bbEntregado).length;
-  const diasCierre = PDC.diasParaCierre();
-  const semActual = PDC.getSemanaActual();
+async function evaluarConIA(){
+  const id=document.getElementById('sel-din-result').value;
+  if(!id){alert('Selecciona una dinámica primero.');return;}
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
 
-  // Bienvenida Planner
-  const bienvenida = document.createElement('div');
-  bienvenida.className = 'welcome-card';
-  bienvenida.innerHTML = `
-    <div class="welcome-text">
-      <div class="welcome-title">Panel de control — ${usuarioActivo.nombre.split(' ')[0]} 📋</div>
-      <div class="welcome-sub">${PDC.CICLO_ACTUAL.nombre} · Semana activa: ${semActual}</div>
-    </div>
-    <div class="welcome-ciclo">
-      <div class="welcome-ciclo-label">Cierre del ciclo</div>
-      <div class="welcome-ciclo-val">${diasCierre > 0 ? diasCierre + ' días' : 'Cerrado'}</div>
-      <div class="welcome-ciclo-sub">${PDC.formatFecha(PDC.CICLO_ACTUAL.fechaCierre)}</div>
-    </div>
-  `;
-  el.appendChild(bienvenida);
+  const sellout=parseFloat(document.getElementById('res-sellout').value)||0;
+  const sellin=parseFloat(document.getElementById('res-sellin').value)||0;
+  const redencion=parseFloat(document.getElementById('res-redencion').value)||0;
+  const inversion=parseFloat(document.getElementById('res-inversion').value)||0;
+  const incrReal=parseFloat(document.getElementById('res-incr-real').value)||0;
+  const unidReal=parseFloat(document.getElementById('res-unid-real').value)||0;
+  const comentario=document.getElementById('res-comentario').value;
 
-  // KPIs
-  const kpiDiv = document.createElement('div');
-  kpiDiv.className = 'grid-4';
-  kpiDiv.innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-label">BBs entregados</div>
-      <div class="kpi-value" style="color:var(--teal)">${totalBB}/${marcas.length}</div>
-      <div class="kpi-sub">${marcas.length - totalBB} pendientes</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Días al cierre</div>
-      <div class="kpi-value" style="color:${diasCierre <= 3 ? 'var(--red)' : diasCierre <= 7 ? 'var(--amber)' : 'var(--navy)'}">${diasCierre > 0 ? diasCierre : 0}</div>
-      <div class="kpi-sub">${PDC.formatFecha(PDC.CICLO_ACTUAL.fechaCierre)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Semana activa</div>
-      <div class="kpi-value">${semActual}</div>
-      <div class="kpi-sub">${PDC.CICLO_ACTUAL.semanas[semActual]?.label || '—'}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Marcas activas</div>
-      <div class="kpi-value">${marcas.length}</div>
-      <div class="kpi-sub">Guatemala</div>
-    </div>
-  `;
-  el.appendChild(kpiDiv);
+  if(!sellout&&!incrReal){alert('Ingresa al menos el sell-out real o el incremento real logrado.');return;}
 
-  // Semáforo de gerentes
-  const semCard = document.createElement('div');
-  semCard.className = 'card';
-  let semRows = marcas.map(m => {
-    const est = PDC.getEstadoGM(m.id);
-    const bbSem = est.bbEntregado ? 'sem-green' : 'sem-amber';
-    const fcstSem = est.forecastAprobado ? 'sem-green' : 'sem-mid';
-    return `
-      <tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:8px;height:8px;border-radius:50%;background:${m.color};flex-shrink:0"></div>
-            <div>
-              <div style="font-weight:600;font-size:12px">${m.nombre}</div>
-              <div style="font-size:11px;color:var(--mid)">${m.gerente}</div>
-            </div>
-          </div>
-        </td>
-        <td class="center">
-          <div class="sem-cell">
-            <span class="semaforo ${bbSem}"></span>
-            <span style="font-size:11px;color:var(--mid)">${est.bbEntregado ? 'Entregado' : 'Pendiente'}</span>
-          </div>
-        </td>
-        <td class="center">
-          <div class="sem-cell">
-            <span class="semaforo ${fcstSem}"></span>
-            <span style="font-size:11px;color:var(--mid)">${est.forecastAprobado ? 'Aprobado' : '—'}</span>
-          </div>
-        </td>
-        <td class="center">
-          <span class="badge ${est.sesionEstado === 'realizada' ? 'badge-green' : est.sesionEstado === 'programada' ? 'badge-blue' : 'badge-mid'}">
-            ${est.sesionEstado === 'realizada' ? 'Realizada' : est.sesionEstado === 'programada' ? 'Programada' : 'Pendiente'}
-          </span>
-        </td>
-        <td class="center">
-          <button class="btn btn-xs btn-ghost" onclick="editarEstadoGM('${m.id}')">Editar</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  const roi=inversion>0?Math.round(((incrReal/100)*(d.unidProy||sellout)*10-inversion)/inversion*100):null;
 
-  semCard.innerHTML = `
-    <div class="card-head">
-      <span class="card-title">🚦 Semáforo del ciclo</span>
-      <button class="btn btn-xs btn-ghost" onclick="actualizarSemaforo()">↺ Actualizar</button>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tbl semaforo-table">
-        <thead><tr>
-          <th>Gerente de Marca</th>
-          <th class="center">Building Blocks</th>
-          <th class="center">Forecast V2</th>
-          <th class="center">Sesión</th>
-          <th class="center">Acciones</th>
-        </tr></thead>
-        <tbody>${semRows}</tbody>
-      </table>
-    </div>
-  `;
-  el.appendChild(semCard);
+  const wrap=document.getElementById('veredicto-wrap');
+  wrap.innerHTML=`<div class="gen-bar"><div class="spinner"></div>La IA está evaluando la efectividad de la dinámica...</div>`;
+  document.getElementById('btn-evaluar').disabled=true;
 
-  // Acciones rápidas
-  const accionesCard = document.createElement('div');
-  accionesCard.className = 'card';
-  accionesCard.innerHTML = `
-    <div class="card-head"><span class="card-title">⚡ Acciones rápidas</span></div>
-    <div class="card-body">
-      <div class="modulos-grid">
-        <a href="bb/index.html" class="modulo-card">
-          <div class="modulo-icon">🏗️</div>
-          <div class="modulo-title">Building Blocks</div>
-          <div class="modulo-desc">Ver o actualizar el estado de BBs por marca</div>
-        </a>
-        <a href="gdm/index.html" class="modulo-card">
-          <div class="modulo-icon">📈</div>
-          <div class="modulo-title">Dinámicas Comerciales</div>
-          <div class="modulo-desc">Revisar dinámicas activas y métricas de efectividad</div>
-        </a>
-        <div class="modulo-card" onclick="irATab('agenda')" style="cursor:pointer">
-          <div class="modulo-icon">📆</div>
-          <div class="modulo-title">Agenda Outlook</div>
-          <div class="modulo-desc">Generar invitaciones para sesiones del ciclo</div>
-        </div>
+  try{
+    const prompt=`Eres un experto en Trade Marketing y Demand Planning FMCG LATAM. Evalúa la efectividad de esta dinámica comercial.
+
+DINÁMICA: ${d.nombre}
+Tipo: ${TIPO_LBL[d.tipo]||d.tipo}
+Marca: ${d.marcaNombre} | Canal: ${d.canal||'General'} | Cliente: ${d.cliente||'N/A'}
+Mecánica: ${d.mecanica||'No especificada'}
+Objetivo: ${d.objetivo||'No especificado'}
+SKUs: ${d.skus.join(', ')||'No especificados'}
+
+RESULTADOS ESPERADOS:
+- Incremento esperado: ${d.incrEsperado?'+'+d.incrEsperado+'%':'No definido'}
+- Inversión estimada: ${d.inversion?'Q'+d.inversion.toLocaleString():'No definida'}
+- Unidades proyectadas: ${d.unidProy?.toLocaleString()||'No definidas'}
+
+RESULTADOS REALES:
+- Sell-out real: ${sellout.toLocaleString()} unidades
+- Sell-in real: ${sellin.toLocaleString()} unidades
+- Redención: ${redencion}%
+- Inversión real: Q${inversion.toLocaleString()}
+- Incremento real logrado: ${incrReal}%
+- Unidades vendidas: ${unidReal.toLocaleString()}
+- ROI estimado: ${roi!==null?roi+'%':'No calculado'}
+- Comentario del gerente: ${comentario||'Sin comentario'}
+
+Evalúa si la dinámica fue exitosa considerando: logro del incremento objetivo, ROI, redención, y aprendizajes para futuras dinámicas.
+
+RESPONDE SOLO EN JSON sin backticks:
+{
+  "veredicto": "exitosa|parcial|fallida",
+  "titulo": "Texto corto del veredicto (máx 10 palabras)",
+  "resumen": "2-3 oraciones explicando el resultado",
+  "puntos_fuertes": ["punto1","punto2"],
+  "puntos_mejora": ["punto1","punto2"],
+  "recomendacion_futura": "1 oración con recomendación para próximas dinámicas similares",
+  "guardar_como_modelo": true o false
+}`;
+
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-iab':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await r.json();
+    const raw=data.content?.find(b=>b.type==='text')?.text||'';
+    const res=JSON.parse(raw.replace(/```json|```/g,'').trim());
+
+    // Guardar resultado
+    d.resultado={sellout,sellin,redencion,inversion,incrreal:incrReal,unidreal:unidReal,comentario,roi};
+    d.veredicto=res;
+    d.estado=res.veredicto==='exitosa'?'exitosa':res.veredicto==='parcial'?'parcial':'fallida';
+    guardar();
+
+    // Renderizar veredicto
+    const cls=res.veredicto==='exitosa'?'exitosa':res.veredicto==='parcial'?'parcial':'fallida';
+    const ico=res.veredicto==='exitosa'?'✅':res.veredicto==='parcial'?'🟡':'❌';
+    wrap.innerHTML=`<div class="veredicto verd-${cls}">
+      <div class="verd-title">${ico} ${res.titulo}</div>
+      <div class="verd-detail">${res.resumen}</div>
+      <div class="verd-metrics">
+        <div class="verd-met"><div class="verd-met-lbl">Incremento</div><div class="verd-met-val" style="color:${incrReal>=(d.incrEsperado||0)?'#27774A':'#B83232'}">${incrReal>0?'+':''}${incrReal}%</div></div>
+        <div class="verd-met"><div class="verd-met-lbl">Sell-out</div><div class="verd-met-val">${sellout.toLocaleString()}</div></div>
+        <div class="verd-met"><div class="verd-met-lbl">Redención</div><div class="verd-met-val">${redencion}%</div></div>
+        <div class="verd-met"><div class="verd-met-lbl">ROI</div><div class="verd-met-val" style="color:${roi>0?'#27774A':roi<0?'#B83232':'#718096'}">${roi!==null?(roi>0?'+':'')+roi+'%':'—'}</div></div>
       </div>
-    </div>
-  `;
-  el.appendChild(accionesCard);
+      ${res.puntos_fuertes?.length?`<div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:#27774A;margin-bottom:3px">✅ Puntos fuertes</div>${res.puntos_fuertes.map(p=>`<div style="font-size:11px;color:#4A5568;margin-bottom:2px">· ${p}</div>`).join('')}</div>`:''}
+      ${res.puntos_mejora?.length?`<div style="margin-top:6px"><div style="font-size:11px;font-weight:700;color:#B83232;margin-bottom:3px">⚠ Áreas de mejora</div>${res.puntos_mejora.map(p=>`<div style="font-size:11px;color:#4A5568;margin-bottom:2px">· ${p}</div>`).join('')}</div>`:''}
+      ${res.recomendacion_futura?`<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.6);border-radius:5px;font-size:11px;color:#4A5568"><strong>💡 Para próximas dinámicas:</strong> ${res.recomendacion_futura}</div>`:''}
+      ${res.guardar_como_modelo?`<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.8);border-radius:5px;display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:#27774A;flex:1">🗂️ Este modelo fue guardado en la Biblioteca — puedes usarlo como recomendación para BBs futuros</span><button class="btn btn-xs" style="background:#27774A;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-family:'Segoe UI',sans-serif;font-size:10px;cursor:pointer" onclick="gdmTab('biblioteca')">Ver biblioteca →</button></div>`:''}
+    </div>`;
+
+    renderHistorial();renderKPIs();
+    if(res.veredicto==='exitosa')renderBiblioteca();
+
+  }catch(e){
+    wrap.innerHTML=`<div style="color:#B83232;font-size:12px;padding:8px">⚠ Error al evaluar: ${e.message}. Verifica tu conexión e intenta de nuevo.</div>`;
+  }
+  document.getElementById('btn-evaluar').disabled=false;
 }
 
-function renderFVAPlanner(el) {
-  const marcas = PDC.MARCAS;
-  const ciclos = ['Mar 2026','Abr 2026','May 2026','Jun 2026'];
-
-  let rows = marcas.map(m => {
-    const fva = PDC.getFVA(m.id).filter(d => d.valor !== null);
-    const prom = fva.length ? (fva.reduce((s,d) => s+d.valor, 0)/fva.length).toFixed(1) : null;
-    const tendencia = fva.length >= 2
-      ? (fva[fva.length-1].valor > fva[fva.length-2].valor ? '↑' : '↓')
-      : '—';
-    return `
-      <tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:8px;height:8px;border-radius:50%;background:${m.color};flex-shrink:0"></div>
-            <span style="font-weight:600">${m.nombre}</span>
-          </div>
-        </td>
-        ${ciclos.map((c,i) => {
-          const d = PDC.getFVA(m.id).find(x => x.ciclo === c);
-          if (!d || d.valor === null) return '<td class="center"><span class="fva-chip fva-neu-chip">—</span></td>';
-          const pos = d.valor >= 0;
-          return `<td class="center"><span class="fva-chip ${pos?'fva-pos-chip':'fva-neg-chip'}">${pos?'+':''}${d.valor.toFixed(1)}%</span></td>`;
-        }).join('')}
-        <td class="center">
-          <strong style="color:${prom && parseFloat(prom)>=0?'var(--green)':'var(--red)'}">
-            ${prom ? (parseFloat(prom)>=0?'+':'') + prom + '%' : '—'}
-          </strong>
-        </td>
-        <td class="center" style="font-size:16px;color:${tendencia==='↑'?'var(--green)':tendencia==='↓'?'var(--red)':'var(--mid)'}">
-          ${tendencia}
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">📊 FVA comparativo — todos los gerentes</span>
-        <span class="badge badge-mid">Ciclos May–Jul 2026</span>
-      </div>
-      <div class="alert alert-info" style="margin:12px 16px 0">
-        <span>ℹ️</span>
-        <span>FVA positivo = el ajuste del Gerente mejoró la precisión vs. el modelo estadístico. FVA negativo = el estadístico era más preciso.</span>
-      </div>
-      <div style="overflow-x:auto;padding:12px 0">
-        <table class="tbl fva-comp-table">
-          <thead><tr>
-            <th>Gerente / Marca</th>
-            ${ciclos.map(c => `<th class="center">${c}</th>`).join('')}
-            <th class="center">Promedio</th>
-            <th class="center">Tendencia</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>
-  `;
+// ── Historial ──
+function renderKPIs(){
+  document.getElementById('kpi-total').textContent=dinamicas.length;
+  document.getElementById('kpi-exitosas').textContent=dinamicas.filter(d=>d.estado==='exitosa').length;
+  document.getElementById('kpi-parciales').textContent=dinamicas.filter(d=>d.estado==='parcial').length;
+  document.getElementById('kpi-pendientes').textContent=dinamicas.filter(d=>!d.veredicto&&d.estado!=='planificada'&&d.estado!=='activa').length;
 }
 
-function renderAgendaPlanner(el) {
-  const PARTICIPANTES = {
-    'Magia Blanca':  ['Ana García (GM)', 'Denis Martínez (Planner)', 'KAM Supermercados', 'Líder GLT'],
-    'Australian':    ['Roberto Soto (GM)', 'Denis Martínez (Planner)', 'KAM Supermercados'],
-    'Del Carmen':    ['María López (GM)', 'Denis Martínez (Planner)', 'KAM Supermercados', 'Líder Categoría'],
-    'Ayudín':        ['Carlos Paz (GM)', 'Denis Martínez (Planner)', 'KAM Supermercados'],
-    'DKasa':         ['Laura Méndez (GM)', 'Denis Martínez (Planner)'],
-  };
-
-  const selParticipantes = new Set();
-  let selMarca = '', selForo = '', selSemana = 'S3', selDuracion = '60';
-
-  el.innerHTML = `
-    <div class="card">
-      <div class="card-head"><span class="card-title">📆 Generador de invitaciones — Agenda Outlook</span></div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:20px">
-
-        <!-- Paso 1 -->
-        <div class="agenda-step">
-          <div class="agenda-step-num">1</div>
-          <div class="agenda-step-body">
-            <div class="agenda-step-title">Configura la sesión</div>
-            <div class="frow" style="gap:10px">
-              <div class="fld">
-                <label>Marca</label>
-                <select id="ag-marca" onchange="agActualizar()">
-                  <option value="">— Selecciona —</option>
-                  ${PDC.MARCAS.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('')}
-                </select>
-              </div>
-              <div class="fld">
-                <label>Tipo de foro</label>
-                <select id="ag-foro" onchange="agActualizar()">
-                  <option value="Forecast Colaborativo V2">Forecast Colaborativo V2</option>
-                  <option value="Pre S&OP">Pre S&OP</option>
-                  <option value="S&OP Ejecutivo">S&OP Ejecutivo</option>
-                  <option value="Sesión de Emergencia">Sesión de Emergencia</option>
-                </select>
-              </div>
-              <div class="fld">
-                <label>Semana</label>
-                <select id="ag-semana" onchange="agActualizar()">
-                  <option value="S2">S2 — 7 al 11 Jul</option>
-                  <option value="S3" selected>S3 — 14 al 18 Jul</option>
-                  <option value="S4">S4 — 21 al 25 Jul</option>
-                </select>
-              </div>
-              <div class="fld">
-                <label>Duración</label>
-                <select id="ag-dur" onchange="agActualizar()">
-                  <option value="30">30 min</option>
-                  <option value="60" selected>60 min</option>
-                  <option value="90">90 min</option>
-                  <option value="120">2 horas</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Paso 2 -->
-        <div class="agenda-step">
-          <div class="agenda-step-num">2</div>
-          <div class="agenda-step-body">
-            <div class="agenda-step-title">Selecciona participantes</div>
-            <div id="ag-participantes" style="display:flex;flex-wrap:wrap;gap:4px;min-height:40px;padding:8px;background:#F8FAFC;border:1px solid var(--bdr);border-radius:var(--r-sm)">
-              <span style="font-size:11px;color:var(--mid);align-self:center">Selecciona una marca primero</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Paso 3 -->
-        <div class="agenda-step">
-          <div class="agenda-step-num">3</div>
-          <div class="agenda-step-body">
-            <div class="agenda-step-title">Disponibilidad <span style="font-size:11px;font-weight:400;color:var(--mid)">(conectar Outlook para ver disponibilidad real)</span></div>
-            <div class="alert alert-info">
-              <span>📅</span>
-              <span>La integración con Outlook está disponible en la versión completa del Hub (requiere permisos Azure AD). Por ahora, coordina disponibilidad manualmente.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Paso 4 -->
-        <div class="agenda-step">
-          <div class="agenda-step-num">4</div>
-          <div class="agenda-step-body">
-            <div class="agenda-step-title">Invitación lista para copiar</div>
-            <div id="ag-invite-wrap">
-              <div class="alert alert-warn"><span>⚠️</span><span>Completa los pasos anteriores para generar la invitación.</span></div>
-            </div>
-            <div id="ag-copy-btn" style="display:none;margin-top:8px">
-              <button class="btn btn-teal" onclick="copiarInvite()">📋 Copiar al portapapeles</button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  `;
-
-  // Funciones locales de la agenda
-  window.agActualizar = function() {
-    const marca    = document.getElementById('ag-marca').value;
-    const foro     = document.getElementById('ag-foro').value;
-    const semana   = document.getElementById('ag-semana').value;
-    const duracion = document.getElementById('ag-dur').value;
-    const partsEl  = document.getElementById('ag-participantes');
-
-    // Participantes
-    if (marca) {
-      const lista = PARTICIPANTES[marca] || [];
-      partsEl.innerHTML = lista.map(p => `
-        <span class="participante-chip${selParticipantes.has(p) ? ' sel' : ''}" onclick="agTogglePart('${p}', this)">
-          ${p}
-        </span>
-      `).join('');
-    }
-
-    // Invite
-    agGenerarInvite(marca, foro, semana, duracion);
-  };
-
-  window.agTogglePart = function(p, el) {
-    if (selParticipantes.has(p)) selParticipantes.delete(p);
-    else selParticipantes.add(p);
-    el.classList.toggle('sel');
-    agActualizar();
-  };
-
-  window.agGenerarInvite = function(marca, foro, semana, duracion) {
-    const invWrap = document.getElementById('ag-invite-wrap');
-    const copyBtn = document.getElementById('ag-copy-btn');
-    if (!marca) {
-      invWrap.innerHTML = '<div class="alert alert-warn"><span>⚠️</span><span>Selecciona una marca para generar la invitación.</span></div>';
-      copyBtn.style.display = 'none';
-      return;
-    }
-    const sv = PDC.CICLO_ACTUAL.semanas[semana];
-    const partsLista = selParticipantes.size > 0
-      ? [...selParticipantes].map(p => `  · ${p}`).join('\n')
-      : '  · (sin participantes seleccionados)';
-
-    const texto = `ASUNTO: ${foro} — ${marca} · ${PDC.CICLO_ACTUAL.nombre}
-
-Hola equipo,
-
-Les comparto la invitación para la sesión de ${foro} correspondiente a la marca ${marca} dentro del ${PDC.CICLO_ACTUAL.nombre}.
-
-📅 Semana: ${sv.label}
-⏱ Duración: ${duracion} minutos
-👥 Participantes:
-${partsLista}
-
-📋 RECORDATORIO DE POLÍTICAS:
-  · Los Building Blocks deben estar cargados con mínimo 48h de anticipación.
-  · Sin BBs entregados → sesión de emergencia con SKUs críticos únicamente.
-  · Ninguna sesión puede extenderse más allá del miércoles de S4 (regla de oro).
-
-Materiales:
-  · Baseline estadístico V1 disponible en el Hub de Pronóstico.
-  · Building Blocks del Gerente de Marca.
-
-Cualquier cambio de fecha requiere aviso con mínimo 24h de anticipación.
-
-Saludos,
-${usuarioActivo.nombre}
-Planner de Demanda — Grupo PDC`;
-
-    invWrap.innerHTML = `<div class="invite-box" id="invite-texto">${texto}</div>`;
-    copyBtn.style.display = 'block';
-  };
-
-  window.copiarInvite = function() {
-    const t = document.getElementById('invite-texto')?.innerText;
-    if (t) {
-      navigator.clipboard.writeText(t).then(() => {
-        const btn = document.querySelector('#ag-copy-btn button');
-        const orig = btn.textContent;
-        btn.textContent = '✅ ¡Copiado!';
-        setTimeout(() => btn.textContent = orig, 2000);
-      });
-    }
-  };
+function renderHistorial(){
+  const filMarca=document.getElementById('fil-marca-hist')?.value||'';
+  let lista=dinamicas.slice().reverse();
+  if(filMarca)lista=lista.filter(d=>d.marcaId===filMarca);
+  const el=document.getElementById('historial-tabla');
+  if(!lista.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#718096;font-size:12px">Sin dinámicas.</div>';return;}
+  const VERD_CLS={exitosa:'est-exitosa',parcial:'est-parcial',fallida:'est-fallida'};
+  const VERD_LBL={exitosa:'✅ Exitosa',parcial:'🟡 Parcial',fallida:'❌ No alcanzó'};
+  el.innerHTML=`<table class="din-table">
+    <thead><tr><th>Dinámica</th><th>Tipo</th><th>Marca</th><th>Canal</th><th>Fechas</th><th>Incr. esp.</th><th>Incr. real</th><th>ROI</th><th>Veredicto</th></tr></thead>
+    <tbody>${lista.map(d=>`<tr>
+      <td style="font-weight:600;font-size:12px">${TIPO_ICO[d.tipo]||'📌'} ${d.nombre}</td>
+      <td><span class="badge" style="background:#EEF1F7;color:#4A5568;font-size:9px">${TIPO_LBL[d.tipo]||'Otro'}</span></td>
+      <td style="font-size:12px">${d.marcaNombre||'—'}</td>
+      <td style="font-size:11px;color:#718096">${d.canal||'Todos'}</td>
+      <td style="font-size:11px;white-space:nowrap">${fmtF(d.fIni)}${d.fFin?' → '+fmtF(d.fFin):''}</td>
+      <td style="text-align:center;font-weight:600">${d.incrEsperado?'+'+d.incrEsperado+'%':'—'}</td>
+      <td style="text-align:center;font-weight:700;color:${d.resultado?.incrreal>0?'#27774A':d.resultado?.incrreal<0?'#B83232':'#718096'}">${d.resultado?.incrreal!=null?(d.resultado.incrreal>0?'+':'')+d.resultado.incrreal+'%':'—'}</td>
+      <td style="text-align:center;font-weight:700;color:${d.resultado?.roi>0?'#27774A':d.resultado?.roi<0?'#B83232':'#718096'}">${d.resultado?.roi!=null?(d.resultado.roi>0?'+':'')+d.resultado.roi+'%':'—'}</td>
+      <td>${d.veredicto?`<span class="badge ${VERD_CLS[d.veredicto.veredicto]||'est-cerrada'}">${VERD_LBL[d.veredicto.veredicto]||d.estado}</span>`:`<span class="badge" style="background:#EEF1F7;color:#718096">${d.estado}</span>`}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
 }
 
-/* ════════════════════════════════════════════════════
-   UTILIDADES COMPARTIDAS
-   ════════════════════════════════════════════════════ */
-function renderTabs(tabs, activo) {
-  const el = document.getElementById('main-tabs');
-  el.innerHTML = tabs.map(t => `
-    <button class="pdc-tab ${t.id === activo ? 'active' : ''}" onclick="irATab('${t.id}')">
-      ${t.icon} ${t.label}
-      ${t.badge ? `<span class="badge">${t.badge}</span>` : ''}
-    </button>
+// ── Biblioteca ──
+function renderBiblioteca(){
+  const exitosas=dinamicas.filter(d=>d.veredicto?.guardar_como_modelo&&d.resultado);
+  const el=document.getElementById('biblioteca-wrap');
+  if(!exitosas.length){
+    el.innerHTML=`<div style="text-align:center;padding:40px 20px;color:#718096"><div style="font-size:36px;margin-bottom:8px;opacity:.4">🗂️</div><div style="font-size:14px;font-weight:600;color:#4A5568;margin-bottom:4px">Sin modelos todavía</div><div style="font-size:12px;line-height:1.6;max-width:280px;margin:0 auto">Los modelos aparecen cuando una dinámica es evaluada como exitosa por la IA.</div></div>`;
+    return;
+  }
+  el.innerHTML=exitosas.map(d=>`
+    <div class="modelo-card" style="margin-bottom:10px">
+      <div class="modelo-ico">${TIPO_ICO[d.tipo]||'📌'}</div>
+      <div class="modelo-body">
+        <div class="modelo-title">${d.nombre}</div>
+        <div class="modelo-meta">${d.marcaNombre||'—'} · ${d.canal||'Todos'} · ${fmtF(d.fIni)}${d.cliente?' · '+d.cliente:''}</div>
+        <div class="modelo-stats">
+          <span class="modelo-stat pos">+${d.resultado.incrreal}% logrado</span>
+          ${d.resultado.roi!=null?`<span class="modelo-stat pos">ROI ${d.resultado.roi>0?'+':''}${d.resultado.roi}%</span>`:''}
+          ${d.resultado.redencion?`<span class="modelo-stat">${d.resultado.redencion}% redención</span>`:''}
+          <span class="modelo-stat">${TIPO_LBL[d.tipo]||'Otro'}</span>
+        </div>
+        <div style="font-size:11px;color:#4A5568;margin-bottom:8px;font-style:italic">"${d.veredicto?.recomendacion_futura||d.mecanica||''}"</div>
+        ${d.skus.length?`<div style="margin-bottom:8px">${d.skus.map(s=>`<span style="font-size:10px;background:#EEF1F7;padding:1px 7px;border-radius:20px;margin-right:3px">${s}</span>`).join('')}</div>`:''}
+        <div class="modelo-actions">
+          <button class="btn btn-primary btn-sm" onclick="aplicarComoTemplate('${d.id}')">🏗️ Aplicar como BB</button>
+          <button class="btn btn-ghost btn-sm" onclick="verDetalle('${d.id}')">Ver detalle</button>
+        </div>
+      </div>
+    </div>
   `).join('');
 }
 
-function irATab(tabId) {
-  // Actualizar tab activo
-  document.querySelectorAll('.pdc-tab').forEach(t => {
-    t.classList.toggle('active', t.getAttribute('onclick').includes(`'${tabId}'`));
-  });
-  if (usuarioActivo.rol === 'GM') renderTabGM(tabId);
-  else renderTabPlanner(tabId);
-}
-
-function editarEstadoGM(marcaId) {
-  const estado = PDC.getEstadoGM(marcaId);
-  const marca  = PDC.MARCAS.find(m => m.id === marcaId);
-
-  const ov = document.createElement('div');
-  ov.className = 'overlay';
-  ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  ov.innerHTML = `
-    <div class="modal">
-      <div class="modal-head">
-        <span class="modal-title">Actualizar estado — ${marca.nombre}</span>
-        <button class="modal-close" onclick="this.closest('.overlay').remove()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="fld">
-          <label>Estado de Building Blocks</label>
-          <select id="ed-bb">
-            <option value="0" ${!estado.bbEntregado ? 'selected' : ''}>Pendiente</option>
-            <option value="1" ${estado.bbEntregado  ? 'selected' : ''}>Entregado</option>
-          </select>
-        </div>
-        <div class="fld">
-          <label>Estado del Forecast V2</label>
-          <select id="ed-fcst">
-            <option value="0" ${!estado.forecastAprobado ? 'selected' : ''}>En espera</option>
-            <option value="1" ${estado.forecastAprobado  ? 'selected' : ''}>Aprobado</option>
-          </select>
-        </div>
-        <div class="fld">
-          <label>Estado de sesión</label>
-          <select id="ed-sesion">
-            <option value="pendiente"   ${estado.sesionEstado === 'pendiente'   ? 'selected' : ''}>Pendiente</option>
-            <option value="programada"  ${estado.sesionEstado === 'programada'  ? 'selected' : ''}>Programada</option>
-            <option value="realizada"   ${estado.sesionEstado === 'realizada'   ? 'selected' : ''}>Realizada</option>
-          </select>
-        </div>
-        <div class="fld">
-          <label>Comentario</label>
-          <textarea id="ed-comentario" placeholder="Notas sobre el estado...">${estado.comentario || ''}</textarea>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" onclick="this.closest('.overlay').remove()">Cancelar</button>
-        <button class="btn btn-teal" onclick="guardarEstadoGM('${marcaId}')">Guardar</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(ov);
-}
-
-function guardarEstadoGM(marcaId) {
-  PDC.actualizarEstadoGM(marcaId, {
-    bbEntregado:      document.getElementById('ed-bb').value === '1',
-    bbFecha:          document.getElementById('ed-bb').value === '1' ? new Date().toISOString().slice(0,10) : null,
-    forecastAprobado: document.getElementById('ed-fcst').value === '1',
-    forecastFecha:    document.getElementById('ed-fcst').value === '1' ? new Date().toISOString().slice(0,10) : null,
-    sesionEstado:     document.getElementById('ed-sesion').value,
-    comentario:       document.getElementById('ed-comentario').value,
-  });
-  document.querySelector('.overlay')?.remove();
-  renderTabPlanner('inicio'); // Refrescar
-}
-
-function actualizarSemaforo() {
-  renderTabPlanner('inicio');
-}
-
-/* ════════════════════════════════════════════════════
-   PANEL DE ADMINISTRACIÓN
-   ════════════════════════════════════════════════════ */
-function getUsuarios() {
-  const guardados = PDC.leer('admin_usuarios', null);
-  if (guardados) return guardados;
-  // Usuarios por defecto
-  return [
-    { id: 'denis',   nombre: 'Denis Martínez',  rol: 'PLANNER', marcaId: null,  iniciales: 'DM', color: '#1A2B4A' },
-    { id: 'ana',     nombre: 'Ana García',       rol: 'GM',      marcaId: 'MB',  iniciales: 'AG', color: '#0D8A7A' },
-    { id: 'roberto', nombre: 'Roberto Soto',     rol: 'GM',      marcaId: 'AU',  iniciales: 'RS', color: '#2E5FA3' },
-    { id: 'maria',   nombre: 'María López',      rol: 'GM',      marcaId: 'DC',  iniciales: 'ML', color: '#C47A1E' },
-    { id: 'carlos',  nombre: 'Carlos Paz',       rol: 'GM',      marcaId: 'AY',  iniciales: 'CP', color: '#27774A' },
-    { id: 'laura',   nombre: 'Laura Méndez',     rol: 'GM',      marcaId: 'DK',  iniciales: 'LM', color: '#B83232' },
-  ];
-}
-
-function getMarcas() {
-  const guardadas = PDC.leer('admin_marcas', null);
-  if (guardadas) return guardadas;
-  return [
-    { id: 'MB', nombre: 'Magia Blanca',  color: '#1A2B4A' },
-    { id: 'AU', nombre: 'Australian',    color: '#0D8A7A' },
-    { id: 'DC', nombre: 'Del Carmen',    color: '#C47A1E' },
-    { id: 'AY', nombre: 'Ayudín',        color: '#2E5FA3' },
-    { id: 'DK', nombre: 'DKasa',         color: '#27774A' },
-  ];
-}
-
-function guardarUsuarios(lista) { PDC.guardar('admin_usuarios', lista); }
-function guardarMarcas(lista)   { PDC.guardar('admin_marcas', lista); }
-
-function renderAdmin(el) {
-  el.innerHTML = `
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">⚙️ Administración del Hub</span>
-        <span class="badge badge-mid">Solo visible para Planners</span>
-      </div>
-      <div class="card-body">
-        <div class="alert alert-info" style="margin-bottom:14px">
-          <span>ℹ️</span>
-          <span>Los cambios aquí se guardan en el navegador y afectan el selector de usuarios del Hub. Cuando se integre con Microsoft 365, este panel se reemplazará con la administración de Azure AD.</span>
-        </div>
-
-        <!-- Sección Marcas -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:13px;font-weight:700;color:var(--navy)">🏷️ Marcas</div>
-          <button class="btn btn-sm btn-primary" onclick="abrirModalMarca()">+ Nueva marca</button>
-        </div>
-        <div id="tabla-marcas" style="margin-bottom:24px"></div>
-
-        <!-- Sección Usuarios -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:13px;font-weight:700;color:var(--navy)">👥 Usuarios</div>
-          <button class="btn btn-sm btn-primary" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
-        </div>
-        <div id="tabla-usuarios"></div>
-      </div>
-    </div>
-  `;
-  renderTablaMarcas();
-  renderTablaUsuarios();
-}
-
-function renderTablaMarcas() {
-  const marcas = getMarcas();
-  const el = document.getElementById('tabla-marcas');
-  if (!el) return;
-  el.innerHTML = `<table class="tbl">
-    <thead><tr><th>Color</th><th>ID</th><th>Nombre</th><th class="center">Usuarios asignados</th><th class="center">Acciones</th></tr></thead>
-    <tbody>${marcas.map(m => {
-      const usuarios = getUsuarios().filter(u => u.marcaId === m.id);
-      return `<tr>
-        <td><div style="width:18px;height:18px;border-radius:50%;background:${m.color};border:2px solid #fff;box-shadow:0 0 0 1px ${m.color}"></div></td>
-        <td><code style="font-size:11px;background:#EEF1F7;padding:1px 6px;border-radius:3px">${m.id}</code></td>
-        <td style="font-weight:600">${m.nombre}</td>
-        <td class="center" style="font-size:11px;color:var(--mid)">${usuarios.length ? usuarios.map(u=>u.nombre.split(' ')[0]).join(', ') : '—'}</td>
-        <td class="center">
-          <div style="display:flex;gap:4px;justify-content:center">
-            <button class="btn btn-xs btn-ghost" onclick="abrirModalMarca('${m.id}')">✏️ Editar</button>
-            <button class="btn btn-xs btn-danger" onclick="eliminarMarca('${m.id}')">Eliminar</button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
-}
-
-function renderTablaUsuarios() {
-  const usuarios = getUsuarios();
-  const marcas = getMarcas();
-  const el = document.getElementById('tabla-usuarios');
-  if (!el) return;
-  el.innerHTML = `<table class="tbl">
-    <thead><tr><th>Avatar</th><th>Nombre</th><th>Rol</th><th>Marca asignada</th><th class="center">Acciones</th></tr></thead>
-    <tbody>${usuarios.map(u => {
-      const marca = marcas.find(m => m.id === u.marcaId);
-      return `<tr>
-        <td>
-          <div style="width:30px;height:30px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${u.iniciales}</div>
-        </td>
-        <td style="font-weight:600">${u.nombre}</td>
-        <td><span class="badge ${u.rol === 'PLANNER' ? 'badge-navy' : 'badge-blue'}">${u.rol === 'PLANNER' ? 'Planner' : 'Gerente de Marca'}</span></td>
-        <td>
-          ${marca ? `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:${marca.color}"></div><span style="font-size:12px">${marca.nombre}</span></div>` : '<span style="color:var(--mid);font-size:11px">— Planner (todas)</span>'}
-        </td>
-        <td class="center">
-          <div style="display:flex;gap:4px;justify-content:center">
-            <button class="btn btn-xs btn-ghost" onclick="abrirModalUsuario('${u.id}')">✏️ Editar</button>
-            <button class="btn btn-xs btn-danger" onclick="eliminarUsuario('${u.id}')">Eliminar</button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
-}
-
-/* ── Modal Marca ── */
-function abrirModalMarca(marcaId = null) {
-  const marcas = getMarcas();
-  const m = marcaId ? marcas.find(x => x.id === marcaId) : null;
-
-  const ov = document.createElement('div');
-  ov.className = 'overlay';
-  ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  ov.innerHTML = `
-    <div class="modal">
-      <div class="modal-head">
-        <span class="modal-title">${m ? 'Editar marca' : 'Nueva marca'}</span>
-        <button class="modal-close" onclick="this.closest('.overlay').remove()">×</button>
-      </div>
-      <div class="modal-body">
-        ${!m ? `<div class="fld"><label>ID de la marca (corto, sin espacios)</label>
-          <input type="text" id="m-id" placeholder="Ej: MB, AU, DC..." maxlength="5" style="text-transform:uppercase">
-          <div style="font-size:10px;color:var(--mid);margin-top:2px">Se usa internamente. No se puede cambiar después.</div>
-        </div>` : `<div style="font-size:12px;color:var(--mid);margin-bottom:4px">ID: <code style="background:#EEF1F7;padding:1px 6px;border-radius:3px">${m.id}</code></div>`}
-        <div class="fld"><label>Nombre de la marca</label>
-          <input type="text" id="m-nombre" value="${m?.nombre||''}" placeholder="Ej: Magia Blanca">
-        </div>
-        <div class="fld"><label>Color</label>
-          <div style="display:flex;align-items:center;gap:10px">
-            <input type="color" id="m-color" value="${m?.color||'#1A2B4A'}" style="width:48px;height:36px;border:1px solid var(--bdr);border-radius:5px;padding:2px;cursor:pointer">
-            <input type="text" id="m-color-hex" value="${m?.color||'#1A2B4A'}" placeholder="#1A2B4A" style="width:100px" oninput="document.getElementById('m-color').value=this.value">
-          </div>
-        </div>
-        <script>document.getElementById('m-color').addEventListener('input',function(){document.getElementById('m-color-hex').value=this.value})<\/script>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" onclick="this.closest('.overlay').remove()">Cancelar</button>
-        <button class="btn btn-teal" onclick="guardarMarcaModal('${marcaId||''}')">Guardar</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(ov);
-}
-
-function guardarMarcaModal(marcaId) {
-  const nombre = document.getElementById('m-nombre').value.trim();
-  const color  = document.getElementById('m-color').value;
-  if (!nombre) { alert('Ingresa un nombre.'); return; }
-
-  const marcas = getMarcas();
-  if (marcaId) {
-    const m = marcas.find(x => x.id === marcaId);
-    if (m) { m.nombre = nombre; m.color = color; }
-  } else {
-    const idEl = document.getElementById('m-id');
-    const id = (idEl?.value||'').trim().toUpperCase().replace(/\s/g,'');
-    if (!id) { alert('Ingresa un ID.'); return; }
-    if (marcas.find(m => m.id === id)) { alert('Ya existe una marca con ese ID.'); return; }
-    marcas.push({ id, nombre, color });
+function aplicarComoTemplate(id){
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  localStorage.setItem('pdc_bb_template',JSON.stringify({
+    nombre:d.nombre,
+    tipo:d.tipo==='exhibicion'?'dist':d.tipo==='descuento'?'price':d.tipo==='lanzamiento'?'launch':d.tipo==='promo'?'promo':'other',
+    descripcion:d.mecanica||d.nombre,
+    skusReferencia:d.skus,
+    incrSugerido:d.resultado?.incrreal,
+    roi:d.resultado?.roi,
+    origenDinamica:id,
+    marcaId:d.marcaId,
+  }));
+  if(confirm(`El modelo "${d.nombre}" (+${d.resultado?.incrreal}% logrado) se aplicará como punto de partida en Building Blocks. ¿Continuar?`)){
+    window.location.href='../bb/index.html';
   }
-  guardarMarcas(marcas);
-  document.querySelector('.overlay')?.remove();
-  renderTablaMarcas();
-  renderTablaUsuarios();
 }
 
-function eliminarMarca(marcaId) {
-  const usuarios = getUsuarios().filter(u => u.marcaId === marcaId);
-  if (usuarios.length) {
-    if (!confirm(`Esta marca tiene ${usuarios.length} usuario(s) asignados. ¿Eliminarla de todas formas? Los usuarios quedarán sin marca.`)) return;
-    const us = getUsuarios();
-    us.forEach(u => { if (u.marcaId === marcaId) u.marcaId = null; });
-    guardarUsuarios(us);
-  } else {
-    if (!confirm('¿Eliminar esta marca?')) return;
-  }
-  const marcas = getMarcas().filter(m => m.id !== marcaId);
-  guardarMarcas(marcas);
-  renderTablaMarcas();
-  renderTablaUsuarios();
+function verDetalle(id){
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  alert(`${TIPO_ICO[d.tipo]} ${d.nombre}\n\nMecánica: ${d.mecanica||'—'}\nIncremento logrado: +${d.resultado?.incrreal}%\nROI: ${d.resultado?.roi!=null?d.resultado.roi+'%':'—'}\nRedención: ${d.resultado?.redencion||0}%\n\nVeredicto IA:\n${d.veredicto?.resumen||'—'}\n\nRecomendación: ${d.veredicto?.recomendacion_futura||'—'}`);
 }
 
-/* ── Modal Usuario ── */
-function abrirModalUsuario(usuarioId = null) {
-  const usuarios = getUsuarios();
-  const marcas   = getMarcas();
-  const u = usuarioId ? usuarios.find(x => x.id === usuarioId) : null;
+// ── Plantilla Excel ──
+function descargarPlantilla(){
+  const csv=`PLANTILLA DE RESULTADOS - DINÁMICA COMERCIAL PDC\n` +
+    `INSTRUCCIONES: Llena los campos de color amarillo con los datos reales de tu dinámica. Los campos de color gris son de referencia.\n\n` +
+    `DATOS DE LA DINÁMICA,,\n` +
+    `Nombre de la dinámica:,[INGRESA EL NOMBRE],\n` +
+    `Marca:,[INGRESA LA MARCA],\n` +
+    `Canal:,[INGRESA EL CANAL],\n` +
+    `Fecha de inicio:,[DD/MM/AAAA],\n` +
+    `Fecha de fin:,[DD/MM/AAAA],\n\n` +
+    `RESULTADOS DE VENTAS,,\n` +
+    `Campo,Valor,Unidad\n` +
+    `Sell-out real (unidades vendidas al consumidor),[INGRESA EL DATO],unidades\n` +
+    `Sell-in real (unidades cargadas al cliente),[INGRESA EL DATO],unidades\n` +
+    `Unidades proyectadas (baseline sin dinámica),[INGRESA EL DATO],unidades\n` +
+    `Incremento real logrado vs baseline,[INGRESA EL DATO],%\n\n` +
+    `INVERSIÓN Y RETORNO,,\n` +
+    `Inversión ejecutada total,[INGRESA EL DATO],Q (quetzales)\n` +
+    `Inversión estimada inicial,[INGRESA EL DATO],Q (quetzales)\n` +
+    `Redención de la mecánica,[INGRESA EL DATO],%\n\n` +
+    `EVALUACIÓN CUALITATIVA,,\n` +
+    `¿Se cumplió el objetivo?,[SI / NO / PARCIALMENTE],\n` +
+    `Factores positivos,[DESCRIBE QUÉ FUNCIONÓ],\n` +
+    `Factores negativos,[DESCRIBE QUÉ NO FUNCIONÓ],\n` +
+    `Comentario ejecutivo,[COMENTARIO GENERAL],\n`;
 
-  const ov = document.createElement('div');
-  ov.className = 'overlay';
-  ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  ov.innerHTML = `
-    <div class="modal">
-      <div class="modal-head">
-        <span class="modal-title">${u ? 'Editar usuario' : 'Nuevo usuario'}</span>
-        <button class="modal-close" onclick="this.closest('.overlay').remove()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="fld"><label>Nombre completo</label>
-          <input type="text" id="u-nombre" value="${u?.nombre||''}" placeholder="Ej: Ana García">
-        </div>
-        <div class="fld"><label>Rol</label>
-          <select id="u-rol" onchange="toggleMarcaField()">
-            <option value="GM" ${u?.rol==='GM'?'selected':''}>Gerente de Marca</option>
-            <option value="PLANNER" ${u?.rol==='PLANNER'?'selected':''}>Planner de Demanda</option>
-          </select>
-        </div>
-        <div class="fld" id="campo-marca" style="${u?.rol==='PLANNER'?'display:none':''}">
-          <label>Marca asignada</label>
-          <select id="u-marca">
-            <option value="">— Sin marca —</option>
-            ${marcas.map(m => `<option value="${m.id}" ${u?.marcaId===m.id?'selected':''}>${m.nombre}</option>`).join('')}
-          </select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="fld"><label>Iniciales (2 letras)</label>
-            <input type="text" id="u-iniciales" value="${u?.iniciales||''}" placeholder="Ej: AG" maxlength="2" style="text-transform:uppercase">
-          </div>
-          <div class="fld"><label>Color del avatar</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <input type="color" id="u-color" value="${u?.color||'#2E5FA3'}" style="width:40px;height:34px;border:1px solid var(--bdr);border-radius:5px;padding:2px;cursor:pointer">
-              <span id="u-color-preview" style="width:30px;height:30px;border-radius:50%;background:${u?.color||'#2E5FA3'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${u?.iniciales||'AB'}</span>
-            </div>
-          </div>
-        </div>
-        <script>
-          document.getElementById('u-color').addEventListener('input',function(){document.getElementById('u-color-preview').style.background=this.value});
-          document.getElementById('u-iniciales').addEventListener('input',function(){document.getElementById('u-color-preview').textContent=this.value.toUpperCase()});
-          function toggleMarcaField(){const r=document.getElementById('u-rol').value;document.getElementById('campo-marca').style.display=r==='PLANNER'?'none':'';}
-        <\/script>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" onclick="this.closest('.overlay').remove()">Cancelar</button>
-        <button class="btn btn-teal" onclick="guardarUsuarioModal('${usuarioId||''}')">Guardar</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(ov);
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='Plantilla_Resultados_Dinamica_PDC.csv';
+  a.click();URL.revokeObjectURL(url);
 }
 
-function guardarUsuarioModal(usuarioId) {
-  const nombre    = document.getElementById('u-nombre').value.trim();
-  const rol       = document.getElementById('u-rol').value;
-  const marcaId   = rol === 'PLANNER' ? null : (document.getElementById('u-marca').value || null);
-  const iniciales = (document.getElementById('u-iniciales').value||'').toUpperCase().slice(0,2);
-  const color     = document.getElementById('u-color').value;
-
-  if (!nombre)    { alert('Ingresa el nombre.'); return; }
-  if (!iniciales) { alert('Ingresa las iniciales.'); return; }
-
-  const usuarios = getUsuarios();
-  if (usuarioId) {
-    const u = usuarios.find(x => x.id === usuarioId);
-    if (u) Object.assign(u, { nombre, rol, marcaId, iniciales, color });
-  } else {
-    const id = nombre.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z_]/g,'') + '_' + Date.now().toString().slice(-4);
-    usuarios.push({ id, nombre, rol, marcaId, iniciales, color });
-  }
-  guardarUsuarios(usuarios);
-
-  // Sincronizar con Auth para que el selector use los usuarios actualizados
-  Auth.USUARIOS = usuarios;
-
-  document.querySelector('.overlay')?.remove();
-  renderTablaUsuarios();
+// ── Utils ──
+function fmtF(iso){
+  if(!iso)return '—';
+  const d=new Date(iso+'T12:00:00');
+  return d.toLocaleDateString('es-GT',{day:'2-digit',month:'short'});
 }
 
-function eliminarUsuario(usuarioId) {
-  if (usuarioId === usuarioActivo?.id) { alert('No puedes eliminarte a ti mismo.'); return; }
-  if (!confirm('¿Eliminar este usuario?')) return;
-  const lista = getUsuarios().filter(u => u.id !== usuarioId);
-  guardarUsuarios(lista);
-  Auth.USUARIOS = lista;
-  renderTablaUsuarios();
-}
+// ── Init ──
+renderListaActivas();
 </script>
 </body>
 </html>
-
 
