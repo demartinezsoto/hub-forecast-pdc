@@ -127,6 +127,11 @@ const Auth = {
 
   /* ─── Inicializar Auth en una página ──────────── */
   init(onLogin) {
+    // Si el admin guardó usuarios personalizados, usarlos
+    const guardados = localStorage.getItem('pdc_hub_admin_usuarios');
+    if (guardados) {
+      try { this.USUARIOS = JSON.parse(guardados); } catch(e) {}
+    }
     const activo = this.getActivo();
     if (activo) {
       if (onLogin) onLogin(activo);
