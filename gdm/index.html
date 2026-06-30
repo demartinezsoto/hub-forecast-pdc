@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dinámicas Comerciales · PDC</title>
+<link rel="stylesheet" href="../css/pdc.css">
+<script src="../js/estado.js"></script>
+<script src="../js/auth.js"></script>
+<style>
+html,body{height:100%;overflow:hidden;display:flex;flex-direction:column}
+.gdm-layout{flex:1;display:flex;overflow:hidden}
+.gdm-content{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;max-width:1100px;margin:0 auto;width:100%}
+
+/* Cards de métrica */
+.met-card{background:var(--w);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.met-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mid)}
+.met-val{font-size:26px;font-weight:700;color:var(--navy);line-height:1.1}
+.met-sub{font-size:11px;color:var(--mid)}
+.met-trend{font-size:12px;font-weight:700}
+.trend-up{color:var(--green)}.trend-down{color:var(--red)}.trend-neu{color:var(--mid)}
+
+/* Tabla dinámica */
+.din-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 100px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr)}
+.din-row:last-child{border-bottom:none}
+.din-row:hover{background:#F8FAFC}
+.din-nombre{font-weight:600;font-size:12px;color:var(--navy)}
+.din-meta{font-size:11px;color:var(--mid);margin-top:1px}
+.din-tipo{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.dt-promo{background:#FEF3C7;color:#92400E}
+.dt-lanzamiento{background:#E0F2FE;color:#075985}
+.dt-exhibicion{background:#DCFCE7;color:#166534}
+.dt-descuento{background:#FFF7ED;color:#9A3412}
+.dt-otro{background:#F1F5F9;color:#475569}
+
+/* Efectividad */
+.efect-bar{height:8px;border-radius:4px;background:#EEF1F7;overflow:hidden}
+.efect-fill{height:100%;border-radius:4px;transition:width .4s}
+.ef-positivo{background:var(--green)}
+.ef-negativo{background:var(--red)}
+.ef-pendiente{background:var(--mid)}
+
+/* Form nueva dinámica */
+.form-din{background:var(--w);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.form-din-head{background:#F2F5FB;border-bottom:1px solid var(--bdr);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.form-din-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+.sku-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--blt);color:var(--blue);border:1px solid #BDD0F5;cursor:pointer}
+.sku-tag:hover{background:var(--rlt);color:var(--red)}
+.sku-add-input{font-family:var(--F);font-size:11px;border:1px solid var(--bdr);border-radius:4px;padding:4px 8px;width:140px}
+.sku-add-input:focus{outline:none;border-color:var(--blue)}
+
+/* Detalle dinámica */
+.det-section{background:#F8FAFC;border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.det-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mid);margin-bottom:8px}
+.met-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.met-input-group{display:flex;flex-direction:column;gap:3px}
+.met-input-group label{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--mid)}
+
+/* Estado badges */
+.estado-activa{background:var(--glt);color:var(--green)}
+.estado-planificada{background:var(--blt);color:var(--blue)}
+.estado-cerrada{background:#EEF1F7;color:var(--mid)}
+.estado-pendiente{background:var(--alt);color:var(--amber)}
+
+/* Tabs internos GDM */
+.gdm-tabs{background:var(--navy2,#243860);display:flex;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:2px solid rgba(255,255,255,.08)}
+.gdm-tabs::-webkit-scrollbar{display:none}
+.gdm-tab{font-family:var(--F);font-size:12px;font-weight:600;color:rgba(255,255,255,.5);background:none;border:none;padding:10px 16px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px}
+.gdm-tab:hover{color:rgba(255,255,255,.8)}
+.gdm-tab.active{color:#fff;border-bottom-color:var(--teal)}
+.gdm-pane{display:none}
+.gdm-pane.active{display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="pdc-top">
+  <a href="../index.html" style="color:rgba(255,255,255,.6);font-size:11px;text-decoration:none;display:flex;align-items:center;gap:4px;flex-shrink:0">◀ Hub</a>
+  <span class="pdc-top-sep">|</span>
+  <span style="font-size:13px;font-weight:600;flex:1">Dinámicas Comerciales · GDM</span>
+  <span id="top-user-gdm" style="font-size:11px;opacity:.55"></span>
+</div>
+
+<!-- TABS GDM -->
+<div class="gdm-tabs">
+  <button class="gdm-tab active" onclick="gdmTab('portal')">📝 Portal de carga</button>
+  <button class="gdm-tab" onclick="gdmTab('historial')">📋 Historial</button>
+  <button class="gdm-tab" onclick="gdmTab('efectividad')">📊 Efectividad</button>
+  <button class="gdm-tab" onclick="gdmTab('biblioteca')">🗂️ Biblioteca de modelos</button>
+</div>
+
+<!-- CONTENIDO -->
+<div class="gdm-layout">
+
+  <!-- TAB: PORTAL DE CARGA -->
+  <div class="gdm-pane active" id="pane-portal">
+    <div class="gdm-content">
+
+      <div class="alert alert-info">
+        <span>ℹ️</span>
+        <span>Registra aquí cada iniciativa comercial que pueda afectar el forecast. Estas dinámicas se conectan automáticamente con los Building Blocks del ciclo correspondiente.</span>
+      </div>
+
+      <!-- Form nueva dinámica -->
+      <div class="form-din" id="form-nueva">
+        <div class="form-din-head">
+          <span style="font-size:13px;font-weight:700;color:var(--navy)">➕ Nueva dinámica comercial</span>
+          <button class="btn btn-xs btn-ghost" onclick="toggleForm()">Ocultar</button>
+        </div>
+        <div class="form-din-body">
+          <div class="grid-2">
+            <div class="fld"><label>Nombre de la dinámica</label><input type="text" id="din-nombre" placeholder="Ej: 2x1 Cloro 1L Walmart julio"></div>
+            <div class="fld"><label>Tipo</label>
+              <select id="din-tipo">
+                <option value="promo">📢 Promoción</option>
+                <option value="exhibicion">🛒 Exhibición / Gondolero</option>
+                <option value="descuento">💲 Descuento precio</option>
+                <option value="lanzamiento">🚀 Lanzamiento</option>
+                <option value="otro">📌 Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="fld"><label>Marca</label>
+              <select id="din-marca">
+                <option value="">— Selecciona —</option>
+                <option value="MB">Magia Blanca</option>
+                <option value="AU">Australian</option>
+                <option value="DC">Del Carmen</option>
+                <option value="AY">Ayudín</option>
+                <option value="DK">DKasa</option>
+              </select>
+            </div>
+            <div class="fld"><label>Canal</label>
+              <select id="din-canal">
+                <option value="">— Todos los canales —</option>
+                <option value="Supermercados">Supermercados / Canal moderno</option>
+                <option value="Detalle">Detalle / Tradicional</option>
+                <option value="Mayoreo">Mayoreo</option>
+                <option value="Farmacia">Farmacia</option>
+                <option value="Online">E-commerce / Online</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="fld"><label>Fecha de inicio</label><input type="date" id="din-fini"></div>
+            <div class="fld"><label>Fecha de fin</label><input type="date" id="din-ffin"></div>
+          </div>
+          <div class="fld"><label>Mecánica / Descripción</label><textarea id="din-mecanica" placeholder="Describe la mecánica: 2x1, descuento %, exhibición X semanas, etc." style="min-height:60px"></textarea></div>
+          <div class="fld">
+            <label>SKUs involucrados</label>
+            <div id="din-skus-chips" style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;padding:5px 0"></div>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <input class="sku-add-input" id="sku-add-input" placeholder="Código SKU..." onkeydown="if(event.key==='Enter'){agregarSKUDin();event.preventDefault()}">
+              <button class="btn btn-xs btn-ghost" onclick="agregarSKUDin()">+ Agregar</button>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="fld"><label>Incremento esperado</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="number" id="din-incr-esp" placeholder="Ej: 25" style="width:80px">
+                <span style="font-size:12px;color:var(--mid)">%</span>
+              </div>
+            </div>
+            <div class="fld"><label>Inversión estimada (Q)</label><input type="number" id="din-inversion" placeholder="Ej: 15000"></div>
+          </div>
+          <div class="fld"><label>Comentario adicional</label><textarea id="din-comentario" placeholder="Contexto, condiciones, cliente específico..." style="min-height:40px"></textarea></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+            <button class="btn btn-ghost btn-sm" onclick="limpiarForm()">Limpiar</button>
+            <button class="btn btn-teal btn-sm" onclick="guardarDinamica()">💾 Guardar dinámica</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista reciente -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📋 Dinámicas activas y planificadas</span>
+          <button class="btn btn-xs btn-ghost" onclick="gdmTab('historial')">Ver historial completo →</button>
+        </div>
+        <div id="lista-activas">
+          <div style="padding:20px;text-align:center;color:var(--mid);font-size:12px">Sin dinámicas registradas. Carga tu primera dinámica arriba.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB: HISTORIAL -->
+  <div class="gdm-pane" id="pane-historial">
+    <div class="gdm-content">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div class="fld" style="flex:1;min-width:180px"><label>Filtrar por marca</label>
+          <select id="fil-marca" onchange="renderHistorial()">
+            <option value="">Todas las marcas</option>
+            <option value="MB">Magia Blanca</option><option value="AU">Australian</option>
+            <option value="DC">Del Carmen</option><option value="AY">Ayudín</option><option value="DK">DKasa</option>
+          </select>
+        </div>
+        <div class="fld" style="flex:1;min-width:180px"><label>Filtrar por tipo</label>
+          <select id="fil-tipo" onchange="renderHistorial()">
+            <option value="">Todos los tipos</option>
+            <option value="promo">Promoción</option><option value="exhibicion">Exhibición</option>
+            <option value="descuento">Descuento</option><option value="lanzamiento">Lanzamiento</option><option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 Historial completo de dinámicas</span></div>
+        <div id="historial-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: EFECTIVIDAD -->
+  <div class="gdm-pane" id="pane-efectividad">
+    <div class="gdm-content">
+
+      <div class="alert alert-info">
+        <span>📊</span>
+        <span>Carga los resultados reales de cada dinámica para calcular su efectividad. El sistema compara el sell-out real vs. el incremento proyectado en el Building Block.</span>
+      </div>
+
+      <div class="grid-4">
+        <div class="met-card" id="kpi-total"><div class="met-label">Total dinámicas</div><div class="met-val">0</div><div class="met-sub">registradas</div></div>
+        <div class="met-card" id="kpi-positivas"><div class="met-label">Efectivas</div><div class="met-val" style="color:var(--green)">0</div><div class="met-sub">superaron expectativa</div></div>
+        <div class="met-card" id="kpi-negativas"><div class="met-label">Por debajo</div><div class="met-val" style="color:var(--red)">0</div><div class="met-sub">no alcanzaron meta</div></div>
+        <div class="met-card" id="kpi-pendientes"><div class="met-label">Sin datos</div><div class="met-val" style="color:var(--amber)">0</div><div class="met-sub">resultados pendientes</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">📊 Cargar resultados de dinámica</span></div>
+        <div class="card-body">
+          <div class="fld" style="margin-bottom:10px"><label>Selecciona una dinámica cerrada</label>
+            <select id="sel-din-result" onchange="mostrarFormResultado()" style="max-width:400px">
+              <option value="">— Selecciona una dinámica —</option>
+            </select>
+          </div>
+          <div id="form-resultado" style="display:none">
+            <div class="det-section">
+              <div class="det-title">Resultados reales</div>
+              <div class="met-grid">
+                <div class="met-input-group"><label>Sell-out real (unidades)</label><input type="number" id="res-sellout" placeholder="Unidades vendidas"></div>
+                <div class="met-input-group"><label>Sell-in real (unidades)</label><input type="number" id="res-sellin" placeholder="Unidades cargadas al cliente"></div>
+                <div class="met-input-group"><label>Inversión real (Q)</label><input type="number" id="res-inversion" placeholder="Inversión ejecutada"></div>
+              </div>
+            </div>
+            <div class="det-section">
+              <div class="det-title">Evaluación</div>
+              <div class="grid-2">
+                <div class="met-input-group"><label>¿Cumplió el objetivo?</label>
+                  <select id="res-cumple"><option value="">— Evaluar —</option><option value="si">✅ Sí, superó expectativa</option><option value="parcial">🟡 Parcialmente</option><option value="no">❌ No alcanzó la meta</option></select>
+                </div>
+                <div class="met-input-group"><label>Comentario ejecutivo</label><input type="text" id="res-comentario" placeholder="Qué funcionó, qué no..."></div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('form-resultado').style.display='none'">Cancelar</button>
+              <button class="btn btn-teal btn-sm" onclick="guardarResultado()">Guardar resultados</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">📈 Resultados por dinámica</span></div>
+        <div id="tabla-resultados"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB: BIBLIOTECA -->
+  <div class="gdm-pane" id="pane-biblioteca">
+    <div class="gdm-content">
+
+      <div class="alert alert-info">
+        <span>🗂️</span>
+        <span>Las dinámicas exitosas se convierten en plantillas reutilizables. Aplica un modelo como Building Block directamente a otros SKUs o canales.</span>
+      </div>
+
+      <div id="biblioteca-content">
+        <div class="card">
+          <div class="card-head"><span class="card-title">🗂️ Modelos disponibles</span></div>
+          <div id="modelos-lista">
+            <div style="padding:24px;text-align:center;color:var(--mid);font-size:12px">
+              <div style="font-size:32px;margin-bottom:8px;opacity:.4">🗂️</div>
+              Los modelos se generan automáticamente cuando una dinámica es marcada como exitosa en la pestaña de Efectividad.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ ESTADO ══
+let dinamicas = [];
+let skusFormActual = [];
+
+// Cargar del localStorage
+function cargarDinamicas(){
+  dinamicas = JSON.parse(localStorage.getItem('pdc_dinamicas')||'[]');
+}
+
+function guardarDinamicas(){
+  localStorage.setItem('pdc_dinamicas', JSON.stringify(dinamicas));
+}
+
+// Usuario
+const usuarioHub = JSON.parse(localStorage.getItem('pdc_hub_usuario_activo')||'null');
+if(usuarioHub){
+  document.getElementById('top-user-gdm').textContent = usuarioHub.nombre;
+}
+
+// ══ TABS ══
+function gdmTab(t){
+  document.querySelectorAll('.gdm-tab').forEach((b,i)=>{
+    const tabs=['portal','historial','efectividad','biblioteca'];
+    b.classList.toggle('active', tabs[i]===t);
+  });
+  document.querySelectorAll('.gdm-pane').forEach(p=>{
+    p.classList.toggle('active', p.id==='pane-'+t);
+  });
+  if(t==='historial')renderHistorial();
+  if(t==='efectividad')renderEfectividad();
+  if(t==='biblioteca')renderBiblioteca();
+}
+
+// ══ FORM ══
+function toggleForm(){
+  const body=document.querySelector('.form-din-body');
+  const btn=document.querySelector('.form-din-head button');
+  const visible=body.style.display!=='none';
+  body.style.display=visible?'none':'flex';
+  btn.textContent=visible?'Mostrar':'Ocultar';
+}
+
+function agregarSKUDin(){
+  const inp=document.getElementById('sku-add-input');
+  const val=inp.value.trim();
+  if(!val)return;
+  if(!skusFormActual.includes(val)){
+    skusFormActual.push(val);
+    renderSKUsChips();
+  }
+  inp.value='';inp.focus();
+}
+
+function renderSKUsChips(){
+  document.getElementById('din-skus-chips').innerHTML=
+    skusFormActual.map((s,i)=>`<span class="sku-tag" onclick="quitarSKUDin(${i})">${s} ×</span>`).join('');
+}
+
+function quitarSKUDin(i){skusFormActual.splice(i,1);renderSKUsChips();}
+
+function limpiarForm(){
+  ['din-nombre','din-mecanica','din-comentario'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('din-tipo').value='promo';
+  document.getElementById('din-marca').value='';
+  document.getElementById('din-canal').value='';
+  document.getElementById('din-fini').value='';
+  document.getElementById('din-ffin').value='';
+  document.getElementById('din-incr-esp').value='';
+  document.getElementById('din-inversion').value='';
+  skusFormActual=[];renderSKUsChips();
+}
+
+function guardarDinamica(){
+  const nombre=document.getElementById('din-nombre').value.trim();
+  if(!nombre){alert('Ingresa un nombre para la dinámica.');return;}
+  const marcaId=document.getElementById('din-marca').value;
+  const marca=PDC.MARCAS.find(m=>m.id===marcaId);
+  const din={
+    id:Date.now().toString(),
+    nombre,
+    tipo:document.getElementById('din-tipo').value,
+    marcaId,
+    marcaNombre:marca?.nombre||'',
+    canal:document.getElementById('din-canal').value,
+    fIni:document.getElementById('din-fini').value,
+    fFin:document.getElementById('din-ffin').value,
+    mecanica:document.getElementById('din-mecanica').value,
+    skus:[...skusFormActual],
+    incrEsperado:parseFloat(document.getElementById('din-incr-esp').value)||null,
+    inversion:parseFloat(document.getElementById('din-inversion').value)||null,
+    comentario:document.getElementById('din-comentario').value,
+    estado:'planificada',
+    creadoPor:usuarioHub?.nombre||'',
+    creadoEn:new Date().toISOString(),
+    resultado:null,
+    ciclo:PDC.CICLO_ACTUAL.id,
+  };
+  dinamicas.push(din);
+  guardarDinamicas();
+  limpiarForm();
+  renderListaActivas();
+  // Actualizar selector de efectividad
+  actualizarSelectorResultado();
+  // Feedback
+  const btn=document.querySelector('.form-din-body .btn-teal');
+  const orig=btn.textContent;btn.textContent='✅ Guardado';
+  setTimeout(()=>btn.textContent=orig,1500);
+}
+
+// ══ LISTA ══
+const TIPO_LABELS={promo:'Promoción',exhibicion:'Exhibición',descuento:'Descuento precio',lanzamiento:'Lanzamiento',otro:'Otro'};
+const TIPO_CLASSES={promo:'dt-promo',exhibicion:'dt-exhibicion',descuento:'dt-descuento',lanzamiento:'dt-lanzamiento',otro:'dt-otro'};
+const TIPO_ICO={promo:'📢',exhibicion:'🛒',descuento:'💲',lanzamiento:'🚀',otro:'📌'};
+const ESTADO_CLASSES={activa:'estado-activa',planificada:'estado-planificada',cerrada:'estado-cerrada',pendiente:'estado-pendiente'};
+
+function renderListaActivas(){
+  const activas=dinamicas.filter(d=>d.estado!=='cerrada').slice(-10).reverse();
+  const el=document.getElementById('lista-activas');
+  if(!activas.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--mid);font-size:12px">Sin dinámicas activas.</div>';return;}
+  el.innerHTML=activas.map(d=>`
+    <div class="din-row">
+      <div>
+        <div class="din-nombre">${TIPO_ICO[d.tipo]||'📌'} ${d.nombre}</div>
+        <div class="din-meta">${d.marcaNombre||'—'} · ${d.canal||'Todos los canales'} · ${formatFecha(d.fIni)}${d.fFin?' → '+formatFecha(d.fFin):''}</div>
+        ${d.skus.length?`<div style="margin-top:3px">${d.skus.slice(0,3).map(s=>`<span style="font-size:10px;background:#EEF1F7;padding:1px 6px;border-radius:20px;margin-right:3px">${s}</span>`).join('')}${d.skus.length>3?`<span style="font-size:10px;color:var(--mid)">+${d.skus.length-3} más</span>`:''}</div>`:''}
+      </div>
+      <span class="din-tipo ${TIPO_CLASSES[d.tipo]||'dt-otro'}">${TIPO_LABELS[d.tipo]||'Otro'}</span>
+      <div>
+        ${d.incrEsperado?`<div style="font-size:11px;font-weight:600;color:var(--navy)">+${d.incrEsperado}% esperado</div>`:''}
+        ${d.inversion?`<div style="font-size:10px;color:var(--mid)">Q ${d.inversion.toLocaleString()}</div>`:''}
+      </div>
+      <span class="badge ${ESTADO_CLASSES[d.estado]||''}">${d.estado}</span>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-xs btn-ghost" onclick="editarDin('${d.id}')">✏</button>
+        <button class="btn btn-xs btn-danger" onclick="cerrarDin('${d.id}')">Cerrar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editarDin(id){
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  // Pre-fill form
+  document.getElementById('din-nombre').value=d.nombre;
+  document.getElementById('din-tipo').value=d.tipo;
+  document.getElementById('din-marca').value=d.marcaId||'';
+  document.getElementById('din-canal').value=d.canal||'';
+  document.getElementById('din-fini').value=d.fIni||'';
+  document.getElementById('din-ffin').value=d.fFin||'';
+  document.getElementById('din-mecanica').value=d.mecanica||'';
+  document.getElementById('din-incr-esp').value=d.incrEsperado||'';
+  document.getElementById('din-inversion').value=d.inversion||'';
+  document.getElementById('din-comentario').value=d.comentario||'';
+  skusFormActual=[...d.skus];renderSKUsChips();
+  // Eliminar para reemplazar
+  dinamicas=dinamicas.filter(x=>x.id!==id);guardarDinamicas();
+  // Scroll al form
+  document.getElementById('form-nueva').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cerrarDin(id){
+  const d=dinamicas.find(x=>x.id===id);
+  if(!d)return;
+  if(!confirm(`¿Marcar "${d.nombre}" como cerrada? Podrás cargar sus resultados en la pestaña de Efectividad.`))return;
+  d.estado='cerrada';
+  guardarDinamicas();
+  renderListaActivas();
+  actualizarSelectorResultado();
+}
+
+// ══ HISTORIAL ══
+function renderHistorial(){
+  const filMarca=document.getElementById('fil-marca')?.value||'';
+  const filTipo=document.getElementById('fil-tipo')?.value||'';
+  let lista=[...dinamicas].reverse();
+  if(filMarca)lista=lista.filter(d=>d.marcaId===filMarca);
+  if(filTipo)lista=lista.filter(d=>d.tipo===filTipo);
+  const el=document.getElementById('historial-content');
+  if(!lista.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--mid);font-size:12px">Sin dinámicas que coincidan.</div>';return;}
+  el.innerHTML=`<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Dinámica</th><th>Tipo</th><th>Marca</th><th>Canal</th><th class="center">Fechas</th><th class="center">Incr. esp.</th><th class="center">Estado</th><th class="center">Efectividad</th></tr></thead>
+    <tbody>${lista.map(d=>{
+      const ef=d.resultado?.cumple;
+      const efLabel=ef==='si'?'✅ Positiva':ef==='parcial'?'🟡 Parcial':ef==='no'?'❌ Negativa':'—';
+      const efColor=ef==='si'?'var(--green)':ef==='parcial'?'var(--amber)':ef==='no'?'var(--red)':'var(--mid)';
+      return `<tr>
+        <td><div style="font-weight:600;font-size:12px">${TIPO_ICO[d.tipo]||'📌'} ${d.nombre}</div><div style="font-size:10px;color:var(--mid)">${d.skus.slice(0,2).join(', ')}${d.skus.length>2?` +${d.skus.length-2} más`:''}</div></td>
+        <td><span class="din-tipo ${TIPO_CLASSES[d.tipo]||'dt-otro'}">${TIPO_LABELS[d.tipo]||'Otro'}</span></td>
+        <td style="font-size:12px">${d.marcaNombre||'—'}</td>
+        <td style="font-size:11px;color:var(--mid)">${d.canal||'Todos'}</td>
+        <td class="center" style="font-size:11px">${formatFecha(d.fIni)}${d.fFin?'<br>'+formatFecha(d.fFin):''}</td>
+        <td class="center" style="font-weight:600;color:var(--navy)">${d.incrEsperado?'+'+d.incrEsperado+'%':'—'}</td>
+        <td class="center"><span class="badge ${ESTADO_CLASSES[d.estado]||''}">${d.estado}</span></td>
+        <td class="center" style="font-size:11px;font-weight:600;color:${efColor}">${efLabel}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ══ EFECTIVIDAD ══
+function actualizarSelectorResultado(){
+  const sel=document.getElementById('sel-din-result');
+  if(!sel)return;
+  const cerradas=dinamicas.filter(d=>d.estado==='cerrada');
+  sel.innerHTML='<option value="">— Selecciona una dinámica —</option>'+
+    cerradas.map(d=>`<option value="${d.id}">${d.nombre} (${formatFecha(d.fIni)})</option>`).join('');
+}
+
+function mostrarFormResultado(){
+  const id=document.getElementById('sel-din-result').value;
+  const el=document.getElementById('form-resultado');
+  el.style.display=id?'block':'none';
+  if(id){
+    const d=dinamicas.find(x=>x.id===id);
+    if(d?.resultado){
+      document.getElementById('res-sellout').value=d.resultado.sellout||'';
+      document.getElementById('res-sellin').value=d.resultado.sellin||'';
+      document.getElementById('res-inversion').value=d.resultado.inversion||'';
+      document.getElementById('res-cumple').value=d.resultado.cumple||'';
+      document.getElementById('res-comentario').value=d.resultado.comentario||'';
+    }
+  }
+}
+
+function guardarResultado(){
+  const id=document.getElementById('sel-din-result').value;
+  if(!id)return;
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  d.resultado={
+    sellout:parseFloat(document.getElementById('res-sellout').value)||null,
+    sellin:parseFloat(document.getElementById('res-sellin').value)||null,
+    inversion:parseFloat(document.getElementById('res-inversion').value)||null,
+    cumple:document.getElementById('res-cumple').value,
+    comentario:document.getElementById('res-comentario').value,
+    guardadoEn:new Date().toISOString(),
+  };
+  guardarDinamicas();
+  renderEfectividad();
+  document.getElementById('form-resultado').style.display='none';
+}
+
+function renderEfectividad(){
+  const conResultado=dinamicas.filter(d=>d.resultado?.cumple);
+  const pos=conResultado.filter(d=>d.resultado.cumple==='si').length;
+  const neg=conResultado.filter(d=>d.resultado.cumple==='no').length;
+  const pend=dinamicas.filter(d=>d.estado==='cerrada'&&!d.resultado?.cumple).length;
+  document.getElementById('kpi-total').querySelector('.met-val').textContent=dinamicas.length;
+  document.getElementById('kpi-positivas').querySelector('.met-val').textContent=pos;
+  document.getElementById('kpi-negativas').querySelector('.met-val').textContent=neg;
+  document.getElementById('kpi-pendientes').querySelector('.met-val').textContent=pend;
+  // Tabla resultados
+  const el=document.getElementById('tabla-resultados');
+  if(!conResultado.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--mid);font-size:12px">Aún no hay resultados cargados. Cierra una dinámica y sube sus datos.</div>';return;}
+  el.innerHTML=`<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Dinámica</th><th class="center">Incr. esperado</th><th class="center">Sell-out real</th><th class="center">Sell-in real</th><th class="center">Inversión real</th><th class="center">Evaluación</th><th>Comentario</th></tr></thead>
+    <tbody>${conResultado.map(d=>{
+      const ef=d.resultado.cumple;
+      const efLabel=ef==='si'?'✅ Superó':ef==='parcial'?'🟡 Parcial':'❌ Bajo meta';
+      const efColor=ef==='si'?'var(--green)':ef==='parcial'?'var(--amber)':'var(--red)';
+      return `<tr>
+        <td><div style="font-weight:600;font-size:12px">${d.nombre}</div><div style="font-size:10px;color:var(--mid)">${d.marcaNombre}</div></td>
+        <td class="center" style="font-weight:600">${d.incrEsperado?'+'+d.incrEsperado+'%':'—'}</td>
+        <td class="center">${d.resultado.sellout?.toLocaleString()||'—'}</td>
+        <td class="center">${d.resultado.sellin?.toLocaleString()||'—'}</td>
+        <td class="center">${d.resultado.inversion?'Q '+d.resultado.inversion.toLocaleString():'—'}</td>
+        <td class="center" style="font-weight:700;color:${efColor}">${efLabel}</td>
+        <td style="font-size:11px;color:var(--mid)">${d.resultado.comentario||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+  // Actualizar selector
+  actualizarSelectorResultado();
+}
+
+// ══ BIBLIOTECA ══
+function renderBiblioteca(){
+  const exitosas=dinamicas.filter(d=>d.resultado?.cumple==='si');
+  const el=document.getElementById('modelos-lista');
+  if(!exitosas.length){
+    el.innerHTML='<div style="padding:24px;text-align:center;color:var(--mid);font-size:12px"><div style="font-size:32px;margin-bottom:8px;opacity:.4">🗂️</div>Los modelos aparecen aquí cuando una dinámica es marcada como exitosa en Efectividad.</div>';
+    return;
+  }
+  el.innerHTML=exitosas.map(d=>`
+    <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:2px">${TIPO_ICO[d.tipo]||'📌'} ${d.nombre}</div>
+        <div style="font-size:11px;color:var(--mid)">${d.marcaNombre} · ${d.canal||'Todos'} · ${formatFecha(d.fIni)}</div>
+        <div style="font-size:11px;color:var(--sl);margin-top:3px">${d.mecanica||'Sin descripción'}</div>
+        <div style="margin-top:4px">
+          ${d.skus.slice(0,4).map(s=>`<span style="font-size:10px;background:#EEF1F7;padding:1px 6px;border-radius:20px;margin-right:3px">${s}</span>`).join('')}
+          ${d.incrEsperado?`<span style="font-size:10px;background:var(--glt);color:var(--green);padding:1px 6px;border-radius:20px;margin-left:2px">+${d.incrEsperado}% logrado</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="btn btn-sm btn-primary" onclick="aplicarComoTemplate('${d.id}')">🏗️ Aplicar como BB</button>
+        <span style="font-size:10px;color:var(--mid)">Abre Building Blocks</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function aplicarComoTemplate(id){
+  const d=dinamicas.find(x=>x.id===id);if(!d)return;
+  // Guardar como template en localStorage para que BB lo recoja
+  localStorage.setItem('pdc_bb_template', JSON.stringify({
+    nombre:d.nombre,
+    tipo:d.tipo==='exhibicion'?'dist':d.tipo==='descuento'?'price':d.tipo==='lanzamiento'?'launch':d.tipo==='promo'?'promo':'other',
+    descripcion:d.mecanica||d.nombre,
+    skusReferencia:d.skus,
+    incrSugerido:d.incrEsperado,
+    origenDinamica:id,
+  }));
+  if(confirm(`Abrirás Building Blocks con el modelo "${d.nombre}" listo para aplicar. ¿Continuar?`)){
+    window.location.href='../bb/index.html';
+  }
+}
+
+// ══ UTILS ══
+function formatFecha(iso){
+  if(!iso)return '—';
+  const d=new Date(iso+'T12:00:00');
+  return d.toLocaleDateString('es-GT',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+// ══ INIT ══
+cargarDinamicas();
+renderListaActivas();
+actualizarSelectorResultado();
+</script>
+</body>
+</html>
